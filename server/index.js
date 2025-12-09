@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 const { sequelize } = require('./models');
 
@@ -10,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/trades', require('./routes/trades'));
 app.use('/api/analytics', require('./routes/analytics'));
@@ -19,6 +20,18 @@ app.use('/api/analytics', require('./routes/analytics'));
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
 });
+
+// Serve static files from the React app in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the React app
+  app.use(express.static(path.join(__dirname, '../client/build')));
+
+  // The "catchall" handler: for any request that doesn't match an API route,
+  // send back React's index.html file so React Router can handle the routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  });
+}
 
 // Connect to PostgreSQL
 const PORT = process.env.PORT || 5000;

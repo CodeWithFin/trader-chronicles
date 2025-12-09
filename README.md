@@ -107,6 +107,26 @@ cd client
 npm start
 ```
 
+### Production Build
+
+1. **Build the React app:**
+   ```bash
+   npm run build
+   ```
+
+2. **Set NODE_ENV to production:**
+   ```bash
+   export NODE_ENV=production
+   # Or in your .env file: NODE_ENV=production
+   ```
+
+3. **Start the server:**
+   ```bash
+   npm start
+   ```
+
+   The server will serve both the API routes and the built React app. All routes will be handled by React Router on the client side.
+
 ## 📁 Project Structure
 
 ```
