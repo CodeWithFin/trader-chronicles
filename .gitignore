@@ -9,3 +9,7 @@ build/
 *.log
 uploads/
 
+# Old React Router files (not used with Next.js)
+src/pages/
+client/
+
