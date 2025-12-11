@@ -1,192 +1,144 @@
 # Trader Chronicles - Backtesting Strategy Log
 
-A full-stack web application for tracking, analyzing, and fine-tuning trading strategies through comprehensive backtesting data visualization and analytics.
+A full-stack Next.js application for tracking, analyzing, and fine-tuning trading strategies through comprehensive backtesting data visualization and analytics.
 
 ## 🚀 Features
 
-- **Trade Entry Form**: Log detailed backtest entries with all trade parameters
+- **Simple Trade Journal Form**: Quick and easy trade entry with only 7 essential fields:
+  - Date & Time
+  - Asset/Symbol
+  - Direction (Long/Short)
+  - Entry Price
+  - Exit Price
+  - P&L (Profit/Loss)
+  - Win/Loss
 - **Trade Log**: View, search, filter, and sort all your backtest entries
 - **Analytics Dashboard**: Comprehensive performance metrics and visualizations including:
   - Win rate, expectancy, profit factor
   - R-Multiple distribution charts
   - Equity curve visualization
   - Win rate by strategy and setup tags
-- **User Authentication**: Secure sign-up and login system
+- **User Authentication**: Secure sign-up and login system powered by Supabase Auth
 - **Brutalist Design**: Modern, bold UI with Tailwind CSS
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: React 18 with functional components and hooks
+- **Framework**: Next.js 14 (App Router)
+- **Frontend**: React 18 with Server Components
 - **Styling**: Tailwind CSS with brutalist design system
-- **Backend**: Node.js/Express REST API
-- **Database**: PostgreSQL with Sequelize ORM
-- **Authentication**: JWT-based authentication
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
 - **Charts**: Recharts for data visualization
 
 ## 📋 Prerequisites
 
-- Node.js (v14 or higher)
-- PostgreSQL (v12 or higher - local installation or cloud service)
+- Node.js (v18 or higher)
 - npm or yarn
+- Supabase account (free tier available)
 
 ## 🔧 Installation
 
-1. **Clone the repository** (if applicable) or navigate to the project directory
+1. **Clone the repository** or navigate to the project directory
 
-2. **Install dependencies for all packages:**
+2. **Install dependencies:**
    ```bash
-   npm run install-all
-   ```
-
-   Or install manually:
-   ```bash
-   # Root dependencies
-   npm install
-   
-   # Backend dependencies
-   cd server
-   npm install
-   
-   # Frontend dependencies
-   cd ../client
    npm install
    ```
 
-3. **Set up environment variables:**
+3. **Set up Supabase:**
+   - Sign up at [supabase.com](https://supabase.com)
+   - Create a new project
+   - Go to SQL Editor and run the SQL from `supabase/schema.sql`
+   - Copy your project URL and anon key from Settings → API
 
-   Create a `.env` file in the `server` directory:
+4. **Set up environment variables:**
+
+   Create a `.env.local` file in the root directory:
    ```env
-   DB_NAME=trader_chronicles
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-   DB_HOST=localhost
-   DB_PORT=5432
-   PORT=5000
-   JWT_SECRET=your-secret-key-change-in-production
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
    ```
-
-   Optionally, create a `.env` file in the `client` directory:
-   ```env
-   REACT_APP_API_URL=http://localhost:5000/api
-   ```
-
-4. **Set up PostgreSQL database:**
-   ```bash
-   # Create the database
-   createdb trader_chronicles
-   
-   # Or using psql
-   psql -U postgres
-   CREATE DATABASE trader_chronicles;
-   ```
-
-   The application will automatically create the tables on first run using Sequelize's sync feature.
 
 ## 🚀 Running the Application
 
-### Development Mode (Both Frontend and Backend)
+### Development Mode
 
-From the root directory:
 ```bash
 npm run dev
 ```
 
-This will start both the backend server (port 5000) and the React frontend (port 3000).
-
-### Run Separately
-
-**Backend only:**
-```bash
-cd server
-npm run dev
-```
-
-**Frontend only:**
-```bash
-cd client
-npm start
-```
+The application will be available at `http://localhost:3000`
 
 ### Production Build
 
-1. **Build the React app:**
-   ```bash
-   npm run build
-   ```
+```bash
+npm run build
+npm start
+```
 
-2. **Set NODE_ENV to production:**
-   ```bash
-   export NODE_ENV=production
-   # Or in your .env file: NODE_ENV=production
-   ```
-
-3. **Start the server:**
-   ```bash
-   npm start
-   ```
-
-   The server will serve both the API routes and the built React app. All routes will be handled by React Router on the client side.
-
-## 📁 Project Structure
+## 📁 Project Structure (Monolithic Next.js)
 
 ```
 trader-chronicles/
-├── client/                 # React frontend
-│   ├── public/
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── context/        # React context (Auth)
-│   │   ├── pages/         # Page components
-│   │   ├── App.js         # Main app component
-│   │   └── index.js       # Entry point
-│   ├── package.json
-│   └── tailwind.config.js
-├── server/                 # Express backend
-│   ├── config/            # Database configuration
-│   ├── models/            # Sequelize models
-│   ├── routes/            # API routes
-│   ├── middleware/        # Auth middleware
-│   ├── index.js          # Server entry point
-│   └── package.json
-└── package.json           # Root package.json
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   │   ├── trades/        # Trade CRUD endpoints
+│   │   └── analytics/     # Analytics endpoint
+│   ├── dashboard/         # Dashboard page
+│   ├── trades/            # Trade pages
+│   ├── analytics/         # Analytics page
+│   ├── login/             # Login page
+│   ├── signup/            # Signup page
+│   ├── layout.js          # Root layout
+│   ├── page.js            # Home page (redirects)
+│   └── globals.css        # Global styles
+├── components/            # React components
+│   └── Navbar.js          # Navigation component
+├── lib/                   # Utilities
+│   ├── supabase.js        # Client-side Supabase client
+│   └── supabase-server.js # Server-side Supabase client
+├── supabase/              # Database schema
+│   ├── schema.sql         # SQL schema for Supabase
+│   └── migration.sql      # Migration script for existing databases
+├── middleware.js          # Next.js middleware for auth
+├── package.json           # Dependencies
+└── next.config.js         # Next.js configuration
 ```
 
 ## 🔌 API Endpoints
 
-### Authentication
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login user
+All API routes are in `app/api/`:
 
-### Trades
-- `POST /api/trades` - Create a new backtest entry (Protected)
 - `GET /api/trades` - Get all trades with filtering (Protected)
-- `GET /api/trades/:id` - Get a single trade (Protected)
-- `PUT /api/trades/:id` - Update a trade (Protected)
-- `DELETE /api/trades/:id` - Delete a trade (Protected)
-
-### Analytics
+- `POST /api/trades` - Create a new backtest entry (Protected)
+- `GET /api/trades/[id]` - Get a single trade (Protected)
+- `PUT /api/trades/[id]` - Update a trade (Protected)
+- `DELETE /api/trades/[id]` - Delete a trade (Protected)
 - `GET /api/analytics` - Get analytics data (Protected)
 
-## 📊 Data Model
+## 📊 Database Schema
 
-### Database Schema
-The application uses PostgreSQL with Sequelize ORM. Tables are automatically created on first run.
+The database uses Supabase (PostgreSQL) with Row Level Security (RLS) enabled.
 
-### User Table
-- `id` (UUID, Primary Key)
-- `username` (String, Unique)
-- `email` (String, Unique)
-- `password` (String, Hashed)
-- `createdAt`, `updatedAt` (Timestamps)
+### Tables
 
-### BacktestEntry Table
-- `id` (UUID, Primary Key)
-- `userId` (UUID, Foreign Key to Users)
-- **Trade Details**: dateTime, assetPair, direction, entryPrice, exitPrice, stopLossPrice, riskPerTrade
-- **Outcomes**: result, pnlAbsolute, rMultiple
-- **Strategy & Context**: strategyUsed, setupTags (Array), notes
-- **Image**: screenshotUrl
-- `createdAt`, `updatedAt` (Timestamps)
+- `users` - User profiles (linked to Supabase Auth)
+- `backtest_entries` - Trade entries with core required fields and optional extended fields
+
+### Core Required Fields
+- `date_time` - When the trade was executed
+- `asset_pair` - Asset/Symbol traded
+- `direction` - Long or Short
+- `entry_price` - Entry price
+- `exit_price` - Exit price
+- `result` - Win or Loss
+- `pnl_absolute` - Profit/Loss amount
+
+### Optional Fields (for backward compatibility)
+- `stop_loss_price`, `risk_per_trade`, `r_multiple`, `strategy_used`, `setup_tags`, `notes`, `screenshot_url`
+
+See `supabase/schema.sql` for the complete schema. If you have an existing database, run `supabase/migration.sql` to update it.
 
 ## 🎨 Design System
 
@@ -199,26 +151,25 @@ The application uses a brutalist design system with:
 
 ## 🔒 Security
 
-- Passwords are hashed using bcrypt
-- JWT tokens for authentication
-- Protected API routes
-- User data isolation (users can only access their own trades)
+- Supabase Auth handles authentication
+- Row Level Security (RLS) ensures users can only access their own data
+- API routes are protected by middleware
+- All database queries are server-side
 
 ## 📝 Usage
 
 1. **Sign Up**: Create a new account
 2. **Login**: Access your dashboard
-3. **Log Trades**: Navigate to "New Trade" and fill in all trade details
+3. **Log Trades**: Navigate to "New Trade" and fill in the 7 essential fields (Date/Time, Asset, Direction, Entry/Exit Prices, P&L, Win/Loss)
 4. **View Log**: See all your trades in the Trade Log with filtering and sorting
 5. **Analyze**: Check the Analytics dashboard for performance metrics and charts
 
 ## 🐛 Troubleshooting
 
-- **PostgreSQL Connection Error**: Ensure PostgreSQL is running and the database credentials in `.env` are correct
-- **Database Not Found**: Create the database using `createdb trader_chronicles` or via psql
-- **Port Already in Use**: Change the PORT in server `.env` or REACT_APP_API_URL in client `.env`
-- **CORS Issues**: The backend is configured to allow requests from `http://localhost:3000`
-- **Tables Not Created**: The app will auto-create tables on first run. If issues occur, check Sequelize logs
+- **Supabase Connection Error**: Verify your environment variables are correct
+- **Database Errors**: Make sure you've run the SQL schema in Supabase SQL Editor
+- **Authentication Issues**: Check that RLS policies are enabled in Supabase
+- **Build Errors**: Ensure all dependencies are installed with `npm install`
 
 ## 📄 License
 
@@ -227,5 +178,3 @@ ISC
 ## 🤝 Contributing
 
 Feel free to submit issues and enhancement requests!
-
-# trader-chronicles
