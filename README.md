@@ -1,6 +1,6 @@
-# Trader Chronicles - Backtesting Strategy Log
+# Trader Chronicles - Trade Journal
 
-A full-stack Next.js application for tracking, analyzing, and fine-tuning trading strategies through comprehensive backtesting data visualization and analytics.
+A full-stack Next.js application for logging trades, tracking performance, and analyzing trading activity with comprehensive data visualization and analytics.
 
 ## 🚀 Features
 
@@ -12,7 +12,7 @@ A full-stack Next.js application for tracking, analyzing, and fine-tuning tradin
   - Exit Price
   - P&L (Profit/Loss)
   - Win/Loss
-- **Trade Log**: View, search, filter, and sort all your backtest entries
+- **Trade Log**: View, search, filter, and sort all your trade entries
 - **Analytics Dashboard**: Comprehensive performance metrics and visualizations including:
   - Win rate, expectancy, profit factor
   - R-Multiple distribution charts
@@ -111,7 +111,7 @@ trader-chronicles/
 All API routes are in `app/api/`:
 
 - `GET /api/trades` - Get all trades with filtering (Protected)
-- `POST /api/trades` - Create a new backtest entry (Protected)
+- `POST /api/trades` - Create a new trade entry (Protected)
 - `GET /api/trades/[id]` - Get a single trade (Protected)
 - `PUT /api/trades/[id]` - Update a trade (Protected)
 - `DELETE /api/trades/[id]` - Delete a trade (Protected)
@@ -124,7 +124,7 @@ The database uses Supabase (PostgreSQL) with Row Level Security (RLS) enabled.
 ### Tables
 
 - `users` - User profiles (linked to Supabase Auth)
-- `backtest_entries` - Trade entries with core required fields and optional extended fields
+- `backtest_entries` - Trade entries with core required fields and optional extended fields (table name kept for backward compatibility)
 
 ### Core Required Fields
 - `date_time` - When the trade was executed

@@ -23,10 +23,10 @@ export default function Dashboard() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                 <div className="max-w-xl">
                   <h2 className="text-3xl md:text-5xl font-semibold tracking-tight uppercase mb-4">
-                    Backtesting Strategy Log
+                    Trade Journal
                   </h2>
                   <p className="text-lg md:text-xl text-zinc-600 leading-relaxed font-medium">
-                    Track, analyze, and fine-tune your trading strategies with comprehensive backtesting data visualization and analytics.
+                    Log your trades, track performance, and analyze your trading activity with comprehensive data visualization and analytics.
                   </p>
                 </div>
 
@@ -55,7 +55,7 @@ export default function Dashboard() {
               <h3 className="text-2xl font-bold tracking-tight mb-4">New Trade Entry</h3>
               <div className="h-0.5 w-12 bg-black mb-4"></div>
               <p className="text-base text-zinc-600 leading-relaxed flex-grow">
-                Log a new backtest trade with all the details including entry, exit, stop loss, and strategy information.
+                Log a new trade with all the essential details including entry, exit, P&L, and outcome.
               </p>
             </div>
           </Link>
@@ -79,7 +79,7 @@ export default function Dashboard() {
                 <h3 className="text-2xl font-bold tracking-tight mb-4">Trade Log</h3>
                 <div className="h-0.5 w-12 bg-white mb-4"></div>
                 <p className="text-base text-orange-50 leading-relaxed font-medium">
-                  View, search, and filter all your backtest entries. Sort by date, asset, strategy, or result.
+                  View, search, and filter all your trade entries. Sort by date, asset, or result.
                 </p>
               </div>
             </div>
@@ -98,7 +98,7 @@ export default function Dashboard() {
               <h3 className="text-2xl font-bold tracking-tight mb-4">Analytics</h3>
               <div className="h-0.5 w-12 bg-black mb-4"></div>
               <p className="text-base text-zinc-600 leading-relaxed flex-grow">
-                Analyze your strategy performance with win rates, R-multiple distributions, equity curves, and more.
+                Analyze your trading performance with win rates, P&L metrics, equity curves, and daily activity visualization.
               </p>
             </div>
           </Link>

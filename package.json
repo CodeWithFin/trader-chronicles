@@ -1,7 +1,7 @@
 {
   "name": "trader-chronicles",
   "version": "1.0.0",
-  "description": "Backtesting Strategy Log Application - Next.js + Supabase",
+  "description": "Trade Journal Application - Log, track, and analyze your trades with Next.js + Supabase",
   "private": true,
   "scripts": {
     "dev": "next dev",
