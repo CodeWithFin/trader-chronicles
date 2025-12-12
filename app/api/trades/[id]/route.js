@@ -79,7 +79,20 @@ export async function PUT(request, { params }) {
     const body = await request.json()
     const updateData = {}
     
+    // Get current trade data if we need to check result for P&L correction
+    let currentResult = body.result
+    if (body.pnlAbsolute !== undefined && body.result === undefined) {
+      const { data: currentTrade } = await supabase
+        .from('backtest_entries')
+        .select('result')
+        .eq('id', params.id)
+        .eq('user_id', user.id)
+        .single()
+      currentResult = currentTrade?.result
+    }
+    
     if (body.dateTime !== undefined) updateData.date_time = body.dateTime
+    if (body.endDate !== undefined) updateData.end_date = body.endDate
     if (body.assetPair !== undefined) updateData.asset_pair = body.assetPair
     if (body.direction !== undefined) updateData.direction = body.direction
     if (body.entryPrice !== undefined) updateData.entry_price = body.entryPrice
@@ -87,7 +100,20 @@ export async function PUT(request, { params }) {
     if (body.stopLossPrice !== undefined) updateData.stop_loss_price = body.stopLossPrice
     if (body.riskPerTrade !== undefined) updateData.risk_per_trade = body.riskPerTrade
     if (body.result !== undefined) updateData.result = body.result
-    if (body.pnlAbsolute !== undefined) updateData.pnl_absolute = body.pnlAbsolute
+    if (body.pnlAbsolute !== undefined) {
+      // Auto-correct P&L sign based on Win/Loss result
+      let correctedPnl = parseFloat(body.pnlAbsolute)
+      const resultToUse = body.result !== undefined ? body.result : currentResult
+      
+      if (resultToUse === 'Loss' && correctedPnl > 0) {
+        correctedPnl = -Math.abs(correctedPnl)
+        console.log(`Auto-corrected P&L from ${body.pnlAbsolute} to ${correctedPnl} for Loss`)
+      } else if (resultToUse === 'Win' && correctedPnl < 0) {
+        correctedPnl = Math.abs(correctedPnl)
+        console.log(`Auto-corrected P&L from ${body.pnlAbsolute} to ${correctedPnl} for Win`)
+      }
+      updateData.pnl_absolute = correctedPnl
+    }
     if (body.rMultiple !== undefined) updateData.r_multiple = body.rMultiple
     if (body.strategyUsed !== undefined) updateData.strategy_used = body.strategyUsed
     if (body.setupTags !== undefined) updateData.setup_tags = body.setupTags

@@ -67,6 +67,16 @@ export async function GET() {
       risk_per_trade: parseFloat(trade.risk_per_trade || 0)
     }))
 
+    // Helper function to correct P&L based on result
+    const getCorrectedPnl = (trade) => {
+      if (trade.result === 'Loss' && trade.pnl_absolute > 0) {
+        return -Math.abs(trade.pnl_absolute)
+      } else if (trade.result === 'Win' && trade.pnl_absolute < 0) {
+        return Math.abs(trade.pnl_absolute)
+      }
+      return trade.pnl_absolute
+    }
+
     // Calculate metrics
     const totalTrades = parsedTrades.length
     const wins = parsedTrades.filter(t => t.result === 'Win')
@@ -75,22 +85,22 @@ export async function GET() {
     const winRate = (wins.length / totalTrades) * 100
     
     // For simplified form: Use P&L-based metrics instead of R-Multiple
-    // Calculate average P&L
-    const totalPnl = parsedTrades.reduce((sum, t) => sum + t.pnl_absolute, 0)
+    // Calculate average P&L using corrected values
+    const totalPnl = parsedTrades.reduce((sum, t) => sum + getCorrectedPnl(t), 0)
     const averagePnl = totalPnl / totalTrades
     
-    // Average win and loss amounts
-    const winPnls = wins.map(t => t.pnl_absolute)
+    // Average win and loss amounts using corrected P&L
+    const winPnls = wins.map(t => getCorrectedPnl(t))
     const averageWinPnl = winPnls.length > 0 
       ? winPnls.reduce((a, b) => a + b, 0) / winPnls.length 
       : 0
     
-    const lossPnls = losses.map(t => t.pnl_absolute)
+    const lossPnls = losses.map(t => getCorrectedPnl(t))
     const averageLossPnl = lossPnls.length > 0
       ? lossPnls.reduce((a, b) => a + b, 0) / lossPnls.length
       : 0
     
-    // Largest win and loss (P&L based)
+    // Largest win and loss (P&L based) - using corrected values
     const largestWinPnl = winPnls.length > 0 ? Math.max(...winPnls, 0) : 0
     const largestLossPnl = lossPnls.length > 0 ? Math.min(...lossPnls, 0) : 0
     
@@ -124,8 +134,9 @@ export async function GET() {
     const lossPercentage = losses.length / totalTrades
     const expectancy = (winPercentage * averageWinPnl) - (lossPercentage * Math.abs(averageLossPnl))
     
-    const totalWins = wins.reduce((sum, t) => sum + Math.abs(t.pnl_absolute), 0)
-    const totalLosses = losses.reduce((sum, t) => sum + Math.abs(t.pnl_absolute), 0)
+    // Profit factor using corrected P&L values
+    const totalWins = wins.reduce((sum, t) => sum + Math.abs(getCorrectedPnl(t)), 0)
+    const totalLosses = losses.reduce((sum, t) => sum + Math.abs(getCorrectedPnl(t)), 0)
     const profitFactor = totalLosses > 0 ? totalWins / totalLosses : (totalWins > 0 ? Infinity : 0)
 
     // R-Multiple Distribution
@@ -151,9 +162,10 @@ export async function GET() {
     }))
 
     // Equity Curve - Use cumulative P&L since we don't have reliable R-Multiple data
+    // Use corrected P&L values
     let cumulativePnl = 0
     const equityCurve = parsedTrades.map(trade => {
-      cumulativePnl += trade.pnl_absolute
+      cumulativePnl += getCorrectedPnl(trade)
       return {
         date: trade.date_time,
         cumulativeR: cumulativePnl, // Keep name for compatibility, but use P&L
@@ -201,6 +213,43 @@ export async function GET() {
       winRateByTag[tag] = (stats.wins / stats.total) * 100
     })
 
+    // Daily contribution data (for GitHub-style graph)
+    // Note: This uses the result field directly, which should be correct
+    // The P&L correction is already handled in getCorrectedPnl for calculations
+    const dailyStats = {}
+    parsedTrades.forEach(trade => {
+      // Get date in YYYY-MM-DD format using local timezone (not UTC)
+      // This prevents date shifting due to timezone conversion
+      const tradeDate = new Date(trade.date_time)
+      // Use local date components to avoid timezone issues
+      const year = tradeDate.getFullYear()
+      const month = String(tradeDate.getMonth() + 1).padStart(2, '0')
+      const day = String(tradeDate.getDate()).padStart(2, '0')
+      const dateKey = `${year}-${month}-${day}`
+      
+      if (!dailyStats[dateKey]) {
+        dailyStats[dateKey] = { wins: 0, losses: 0, total: 0 }
+      }
+      
+      dailyStats[dateKey].total++
+      // Use corrected result: if P&L is positive but result is Loss, it's actually a loss
+      // But for the graph, we use the result field which should be correct
+      if (trade.result === 'Win') {
+        dailyStats[dateKey].wins++
+      } else {
+        dailyStats[dateKey].losses++
+      }
+    })
+
+    // Convert to array format for the graph
+    const dailyContribution = Object.entries(dailyStats).map(([date, stats]) => ({
+      date,
+      wins: stats.wins,
+      losses: stats.losses,
+      total: stats.total,
+      outcome: stats.wins > stats.losses ? 'win' : stats.losses > stats.wins ? 'loss' : 'neutral'
+    })).sort((a, b) => a.date.localeCompare(b.date))
+
     return NextResponse.json({
       totalTrades,
       winRate,
@@ -221,7 +270,9 @@ export async function GET() {
       averageLossPnl,
       largestWinPnl,
       largestLossPnl,
-      totalPnl
+      totalPnl,
+      // Daily contribution data for GitHub-style graph
+      dailyContribution
     })
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

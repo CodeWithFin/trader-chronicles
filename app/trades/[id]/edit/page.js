@@ -3,16 +3,19 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import DatePicker from 'react-datepicker'
 import { supabase } from '@/lib/supabase'
 import 'react-datepicker/dist/react-datepicker.css'
 
-export default function TradeForm() {
+export default function EditTradeForm() {
   const router = useRouter()
+  const params = useParams()
+  const tradeId = params.id
   const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(true)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [formData, setFormData] = useState({
@@ -26,30 +29,64 @@ export default function TradeForm() {
     pnlAbsolute: ''
   })
 
-  // Check authentication on mount
+  // Helper to correct P&L for display
+  const getCorrectedPnl = (trade) => {
+    if (trade.result === 'Loss' && trade.pnl_absolute > 0) {
+      return -Math.abs(trade.pnl_absolute)
+    } else if (trade.result === 'Win' && trade.pnl_absolute < 0) {
+      return Math.abs(trade.pnl_absolute)
+    }
+    return trade.pnl_absolute
+  }
+
+  // Check authentication and fetch trade data
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndFetch = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) {
-          console.error('Auth check error:', error)
+        // Check auth first
+        const { data: { session }, error: authError } = await supabase.auth.getSession()
+        if (authError || !session) {
           router.push('/login')
           return
         }
-        if (!session) {
-          console.log('No session found, redirecting to login')
-          router.push('/login')
-          return
-        }
-        console.log('User authenticated:', session.user.email)
         setCheckingAuth(false)
+
+        // Fetch trade data
+        const response = await fetch(`/api/trades/${tradeId}`, {
+          credentials: 'include'
+        })
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Trade not found')
+          }
+          throw new Error('Failed to fetch trade')
+        }
+
+        const trade = await response.json()
+        
+        // Pre-populate form with trade data (using corrected P&L)
+        const correctedPnl = getCorrectedPnl(trade)
+        setFormData({
+          dateTime: new Date(trade.date_time),
+          endDate: trade.end_date ? new Date(trade.end_date) : new Date(trade.date_time),
+          assetPair: trade.asset_pair || '',
+          direction: trade.direction || 'Long',
+          entryPrice: trade.entry_price?.toString() || '',
+          exitPrice: trade.exit_price?.toString() || '',
+          result: trade.result || 'Win',
+          pnlAbsolute: correctedPnl.toString()
+        })
+        setFetching(false)
       } catch (err) {
-        console.error('Auth check failed:', err)
-        router.push('/login')
+        console.error('Error:', err)
+        setError(err.message || 'Failed to load trade')
+        setFetching(false)
+        setCheckingAuth(false)
       }
     }
-    checkAuth()
-  }, [router])
+    checkAuthAndFetch()
+  }, [tradeId, router])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -64,10 +101,8 @@ export default function TradeForm() {
         const pnlValue = parseFloat(prev.pnlAbsolute)
         if (!isNaN(pnlValue) && pnlValue !== 0) {
           if (value === 'Loss' && pnlValue > 0) {
-            // If Loss is selected and P&L is positive, make it negative
             updated.pnlAbsolute = (-Math.abs(pnlValue)).toString()
           } else if (value === 'Win' && pnlValue < 0) {
-            // If Win is selected and P&L is negative, make it positive
             updated.pnlAbsolute = Math.abs(pnlValue).toString()
           }
         }
@@ -78,10 +113,8 @@ export default function TradeForm() {
         const pnlValue = parseFloat(value)
         if (!isNaN(pnlValue)) {
           if (pnlValue < 0 && prev.result === 'Win') {
-            // If P&L is negative, automatically set to Loss
             updated.result = 'Loss'
           } else if (pnlValue > 0 && prev.result === 'Loss') {
-            // If P&L is positive, automatically set to Win
             updated.result = 'Win'
           }
         }
@@ -133,25 +166,17 @@ export default function TradeForm() {
         entryPrice: parseFloat(formData.entryPrice),
         exitPrice: parseFloat(formData.exitPrice),
         result: formData.result,
-        pnlAbsolute: parseFloat(formData.pnlAbsolute),
-        // Set defaults for required fields that aren't in the simplified form
-        stopLossPrice: 0,
-        riskPerTrade: 0,
-        rMultiple: 0,
-        strategyUsed: '',
-        setupTags: [],
-        notes: '',
-        screenshotUrl: ''
+        pnlAbsolute: parseFloat(formData.pnlAbsolute)
       }
 
-      console.log('Submitting payload:', payload)
+      console.log('Updating trade:', payload)
 
-      const response = await fetch('/api/trades', {
-        method: 'POST',
+      const response = await fetch(`/api/trades/${tradeId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies for authentication
+        credentials: 'include',
         body: JSON.stringify(payload),
       })
 
@@ -159,25 +184,25 @@ export default function TradeForm() {
 
       if (!response.ok) {
         console.error('API Error:', responseData)
-        throw new Error(responseData.error || `Failed to create trade entry (${response.status})`)
+        throw new Error(responseData.error || `Failed to update trade (${response.status})`)
       }
 
-      console.log('Trade created successfully:', responseData)
+      console.log('Trade updated successfully:', responseData)
       router.push('/trades')
     } catch (err) {
       console.error('Form submission error:', err)
-      setError(err.message || 'Failed to create trade entry')
+      setError(err.message || 'Failed to update trade')
       setLoading(false)
     }
   }
 
-  if (checkingAuth) {
+  if (checkingAuth || fetching) {
     return (
       <>
         <Navbar />
         <div className="max-w-2xl mx-auto px-4 py-8 md:py-16">
           <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-            <p className="text-center">Checking authentication...</p>
+            <p className="text-center">{checkingAuth ? 'Checking authentication...' : 'Loading trade...'}</p>
           </div>
         </div>
       </>
@@ -189,7 +214,7 @@ export default function TradeForm() {
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-8 md:py-16">
         <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Simple Trade Journal</h1>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Edit Trade</h1>
           <div className="w-full h-1 bg-black mb-8"></div>
 
           {error && (
@@ -339,7 +364,7 @@ export default function TradeForm() {
                 disabled={loading}
                 className="flex-1 px-6 py-4 border-4 border-black bg-orange-600 text-white text-lg font-bold hover:bg-orange-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Saving...' : 'Save Trade'}
+                {loading ? 'Updating...' : 'Update Trade'}
               </button>
               <Link
                 href="/trades"
@@ -354,3 +379,4 @@ export default function TradeForm() {
     </>
   )
 }
+

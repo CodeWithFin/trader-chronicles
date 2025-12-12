@@ -186,6 +186,7 @@ export async function POST(request) {
 
     const {
       dateTime,
+      endDate,
       assetPair,
       direction,
       entryPrice,
@@ -201,9 +202,22 @@ export async function POST(request) {
       screenshotUrl = ''
     } = body
 
+    // Auto-correct P&L sign based on Win/Loss result
+    let correctedPnl = parseFloat(pnlAbsolute)
+    if (result === 'Loss' && correctedPnl > 0) {
+      // If Loss but P&L is positive, make it negative
+      correctedPnl = -Math.abs(correctedPnl)
+      console.log(`Auto-corrected P&L from ${pnlAbsolute} to ${correctedPnl} for Loss`)
+    } else if (result === 'Win' && correctedPnl < 0) {
+      // If Win but P&L is negative, make it positive
+      correctedPnl = Math.abs(correctedPnl)
+      console.log(`Auto-corrected P&L from ${pnlAbsolute} to ${correctedPnl} for Win`)
+    }
+
     const insertData = {
       user_id: user.id,
       date_time: dateTime,
+      end_date: endDate || dateTime, // Use endDate if provided, otherwise use dateTime
       asset_pair: assetPair.trim(),
       direction,
       entry_price: parseFloat(entryPrice),
@@ -211,7 +225,7 @@ export async function POST(request) {
       stop_loss_price: parseFloat(stopLossPrice) || 0,
       risk_per_trade: parseFloat(riskPerTrade) || 0,
       result,
-      pnl_absolute: parseFloat(pnlAbsolute),
+      pnl_absolute: correctedPnl,
       r_multiple: parseFloat(rMultiple) || 0,
       strategy_used: strategyUsed || '',
       setup_tags: Array.isArray(setupTags) ? setupTags : [],

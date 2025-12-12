@@ -12,6 +12,8 @@ export default function TradeLog() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedTrade, setSelectedTrade] = useState(null)
+  const [deletingTradeId, setDeletingTradeId] = useState(null)
+  const [deletingAll, setDeletingAll] = useState(false)
   const [filters, setFilters] = useState({
     assetPair: '',
     result: '',
@@ -70,6 +72,108 @@ export default function TradeLog() {
     }
   }
 
+  // Helper function to correct P&L display based on result
+  const getCorrectedPnl = (trade) => {
+    if (trade.result === 'Loss' && trade.pnl_absolute > 0) {
+      return -Math.abs(trade.pnl_absolute)
+    } else if (trade.result === 'Win' && trade.pnl_absolute < 0) {
+      return Math.abs(trade.pnl_absolute)
+    }
+    return trade.pnl_absolute
+  }
+
+  const handleDelete = async (tradeId, e) => {
+    e.stopPropagation() // Prevent opening the modal when clicking delete
+    
+    if (!confirm('Are you sure you want to delete this trade? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      setDeletingTradeId(tradeId)
+      const response = await fetch(`/api/trades/${tradeId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete trade')
+      }
+
+      // Remove the trade from the list
+      setTrades(prevTrades => prevTrades.filter(trade => trade.id !== tradeId))
+      
+      // Close modal if the deleted trade was selected
+      if (selectedTrade && selectedTrade.id === tradeId) {
+        setSelectedTrade(null)
+      }
+      
+      setError('')
+    } catch (err) {
+      setError(err.message || 'Failed to delete trade')
+      console.error(err)
+    } finally {
+      setDeletingTradeId(null)
+    }
+  }
+
+  const handleDeleteAll = async () => {
+    // Double confirmation for safety
+    const firstConfirm = confirm(
+      `⚠️ WARNING: This will delete ALL ${trades.length} trades permanently!\n\n` +
+      'This action CANNOT be undone. Are you absolutely sure?'
+    )
+    
+    if (!firstConfirm) return
+
+    const secondConfirm = confirm(
+      'FINAL CONFIRMATION: You are about to delete ALL your trades.\n\n' +
+      'Type "DELETE ALL" in the next prompt to confirm, or click Cancel to abort.'
+    )
+    
+    if (!secondConfirm) return
+
+    const typedConfirm = prompt(
+      'Type "DELETE ALL" (in all caps) to confirm deletion of all trades:'
+    )
+
+    if (typedConfirm !== 'DELETE ALL') {
+      alert('Deletion cancelled. The text did not match.')
+      return
+    }
+
+    try {
+      setDeletingAll(true)
+      setError('')
+      
+      const response = await fetch('/api/trades/delete-all', {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete all trades')
+      }
+
+      const result = await response.json()
+      
+      // Clear all trades from state
+      setTrades([])
+      setSelectedTrade(null)
+      
+      alert(`Successfully deleted ${result.deletedCount || trades.length} trades.`)
+      setError('')
+    } catch (err) {
+      setError(err.message || 'Failed to delete all trades')
+      console.error(err)
+      alert(`Error: ${err.message}`)
+    } finally {
+      setDeletingAll(false)
+    }
+  }
+
 
   if (loading) {
     return (
@@ -91,12 +195,23 @@ export default function TradeLog() {
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Trade Log</h1>
             <div className="w-full h-1 bg-black"></div>
           </div>
-          <Link
-            href="/trades/new"
-            className="px-6 py-3 border-4 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-          >
-            + New Trade
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              href="/trades/new"
+              className="px-6 py-3 border-4 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+            >
+              + New Trade
+            </Link>
+            {trades.length > 0 && (
+              <button
+                onClick={handleDeleteAll}
+                disabled={deletingAll}
+                className="px-6 py-3 border-4 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingAll ? 'Deleting...' : 'Delete All Trades'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
@@ -176,8 +291,17 @@ export default function TradeLog() {
                     </td>
                     <td className="px-4 py-3">{trade.entry_price}</td>
                     <td className="px-4 py-3">{trade.exit_price}</td>
-                    <td className={`px-4 py-3 font-semibold ${trade.pnl_absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {trade.pnl_absolute >= 0 ? '+' : ''}${trade.pnl_absolute}
+                    <td className={`px-4 py-3 font-semibold ${(() => {
+                      const correctedPnl = getCorrectedPnl(trade)
+                      return correctedPnl >= 0 ? 'text-green-600' : 'text-red-600'
+                    })()}`}>
+                      {(() => {
+                        const correctedPnl = getCorrectedPnl(trade)
+                        return correctedPnl >= 0 ? '+' : ''
+                      })()}${(() => {
+                        const correctedPnl = getCorrectedPnl(trade)
+                        return correctedPnl
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 border-2 ${getResultColor(trade.result)} font-bold text-xs`}>
@@ -185,12 +309,21 @@ export default function TradeLog() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => setSelectedTrade(trade)}
-                        className="px-3 py-1 border-2 border-black bg-white text-sm font-bold hover:bg-zinc-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px]"
-                      >
-                        View
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setSelectedTrade(trade)}
+                          className="px-3 py-1 border-2 border-black bg-white text-sm font-bold hover:bg-zinc-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px]"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(trade.id, e)}
+                          disabled={deletingTradeId === trade.id}
+                          className="px-3 py-1 border-2 border-black bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {deletingTradeId === trade.id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -205,12 +338,31 @@ export default function TradeLog() {
             <div className="border-4 border-black bg-white p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-start mb-6">
                 <h2 className="text-3xl font-bold uppercase">Trade Details</h2>
-                <button
-                  onClick={() => setSelectedTrade(null)}
-                  className="px-4 py-2 border-2 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  ×
-                </button>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/trades/${selectedTrade.id}/edit`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-4 py-2 border-2 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(selectedTrade.id, e)
+                    }}
+                    disabled={deletingTradeId === selectedTrade.id}
+                    className="px-4 py-2 border-2 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {deletingTradeId === selectedTrade.id ? 'Deleting...' : 'Delete Trade'}
+                  </button>
+                  <button
+                    onClick={() => setSelectedTrade(null)}
+                    className="px-4 py-2 border-2 border-black bg-zinc-600 text-white font-bold hover:bg-zinc-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -219,10 +371,18 @@ export default function TradeLog() {
                   <h3 className="text-lg font-bold uppercase mb-4">Trade Identification</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Date/Time</p>
+                      <p className="text-sm font-bold text-zinc-600 uppercase">Start Date/Time</p>
                       <p className="text-lg font-semibold">{format(new Date(selectedTrade.date_time), 'MMMM d, yyyy HH:mm')}</p>
                     </div>
                     <div>
+                      <p className="text-sm font-bold text-zinc-600 uppercase">End Date/Time</p>
+                      <p className="text-lg font-semibold">
+                        {selectedTrade.end_date 
+                          ? format(new Date(selectedTrade.end_date), 'MMMM d, yyyy HH:mm')
+                          : format(new Date(selectedTrade.date_time), 'MMMM d, yyyy HH:mm')}
+                      </p>
+                    </div>
+                    <div className="col-span-2">
                       <p className="text-sm font-bold text-zinc-600 uppercase">Asset/Pair</p>
                       <p className="text-lg font-semibold">{selectedTrade.asset_pair}</p>
                     </div>
@@ -254,8 +414,17 @@ export default function TradeLog() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-bold text-zinc-600 uppercase">P&L</p>
-                      <p className={`text-lg font-semibold ${selectedTrade.pnl_absolute >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {selectedTrade.pnl_absolute >= 0 ? '+' : ''}${selectedTrade.pnl_absolute}
+                      <p className={`text-lg font-semibold ${(() => {
+                        const correctedPnl = getCorrectedPnl(selectedTrade)
+                        return correctedPnl >= 0 ? 'text-green-600' : 'text-red-600'
+                      })()}`}>
+                        {(() => {
+                          const correctedPnl = getCorrectedPnl(selectedTrade)
+                          return correctedPnl >= 0 ? '+' : ''
+                        })()}${(() => {
+                          const correctedPnl = getCorrectedPnl(selectedTrade)
+                          return correctedPnl
+                        })()}
                       </p>
                     </div>
                     <div>
