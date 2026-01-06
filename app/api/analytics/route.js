@@ -52,7 +52,8 @@ export async function GET() {
         rMultipleDistribution: [],
         equityCurve: [],
         winRateByStrategy: {},
-        winRateByTag: {}
+        winRateByTag: {},
+        dailyContribution: []
       })
     }
 
@@ -228,18 +229,25 @@ export async function GET() {
       const dateKey = `${year}-${month}-${day}`
       
       if (!dailyStats[dateKey]) {
-        dailyStats[dateKey] = { wins: 0, losses: 0, total: 0 }
+        dailyStats[dateKey] = { wins: 0, losses: 0, total: 0, pnl: 0 }
       }
       
       dailyStats[dateKey].total++
+      // Add P&L for this trade (using corrected P&L)
+      dailyStats[dateKey].pnl += getCorrectedPnl(trade)
       // Use corrected result: if P&L is positive but result is Loss, it's actually a loss
       // But for the graph, we use the result field which should be correct
       if (trade.result === 'Win') {
         dailyStats[dateKey].wins++
-      } else {
+      } else if (trade.result === 'Loss') {
         dailyStats[dateKey].losses++
       }
+      // Break Even trades are counted in total but don't affect wins/losses
     })
+    
+    // Debug logging
+    console.log('Daily stats:', dailyStats)
+    console.log('Total trades processed:', parsedTrades.length)
 
     // Convert to array format for the graph
     const dailyContribution = Object.entries(dailyStats).map(([date, stats]) => ({
@@ -247,6 +255,7 @@ export async function GET() {
       wins: stats.wins,
       losses: stats.losses,
       total: stats.total,
+      pnl: parseFloat(stats.pnl.toFixed(2)),
       outcome: stats.wins > stats.losses ? 'win' : stats.losses > stats.wins ? 'loss' : 'neutral'
     })).sort((a, b) => a.date.localeCompare(b.date))
 

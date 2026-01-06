@@ -18,6 +18,7 @@ import {
 } from 'recharts'
 import { format } from 'date-fns'
 import Navbar from '@/components/Navbar'
+import ContributionGraph from '@/components/ContributionGraph'
 
 const COLORS = ['#ea580c', '#f97316', '#fb923c', '#fdba74', '#fecaca', '#fef3c7', '#dbeafe', '#e0e7ff']
 
@@ -25,6 +26,7 @@ export default function Analytics() {
   const [analytics, setAnalytics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [graphMode, setGraphMode] = useState('activity') // 'activity' | 'pnl'
 
   useEffect(() => {
     fetchAnalytics()
@@ -37,6 +39,8 @@ export default function Analytics() {
       if (!response.ok) throw new Error('Failed to fetch analytics')
       
       const data = await response.json()
+      console.log('Analytics data received:', data)
+      console.log('Daily contribution:', data.dailyContribution)
       setAnalytics(data)
       setError('')
     } catch (err) {
@@ -113,224 +117,16 @@ export default function Analytics() {
     </div>
   )
 
-  // Contribution Graph Component (GitHub-style)
-  const ContributionGraph = () => {
-    if (!dailyContribution || dailyContribution.length === 0) {
-      return (
-        <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-          <h2 className="text-2xl font-bold mb-6 uppercase">Trading Activity</h2>
-          <p className="text-center text-zinc-600 py-12">No trading data available</p>
-        </div>
-      )
-    }
-
-    // Create a map for quick lookup
-    const dailyMap = new Map()
-    dailyContribution.forEach(day => {
-      dailyMap.set(day.date, day)
-    })
-
-    // GitHub shows last 53 weeks (approximately 1 year)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    // Calculate start date: 53 weeks ago, but align to Sunday
-    const weeksToShow = 53
-    const daysToShow = weeksToShow * 7
-    let startDate = new Date(today)
-    startDate.setDate(startDate.getDate() - daysToShow)
-    
-    // Align to Sunday (0 = Sunday)
-    const dayOfWeek = startDate.getDay()
-    startDate.setDate(startDate.getDate() - dayOfWeek)
-    startDate.setHours(0, 0, 0, 0)
-
-    // Generate grid: 7 rows (days) × 53 columns (weeks)
-    // Rows: Sunday (0) to Saturday (6)
-    // Columns: weeks from startDate to today
-    const grid = []
-    const monthLabels = []
-    const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-    
-    // Track months for labels - show the LAST occurrence of each month (not the first)
-    // This prevents showing duplicate month labels like "Dec" appearing twice
-    const monthMap = new Map()
-    const monthAbbrMap = new Map() // Track by abbreviation, keep updating to get last occurrence
-    
-    // Generate weeks (columns)
-    for (let week = 0; week < weeksToShow; week++) {
-      const weekStart = new Date(startDate)
-      weekStart.setDate(weekStart.getDate() + (week * 7))
-      
-      // Generate days for this week (7 rows)
-      const weekDays = []
-      for (let day = 0; day < 7; day++) {
-        const currentDate = new Date(weekStart)
-        currentDate.setDate(currentDate.getDate() + day)
-        
-        // Only include dates up to today
-        if (currentDate <= today) {
-          // Use local date components to avoid timezone issues (match API format)
-          const year = currentDate.getFullYear()
-          const month = String(currentDate.getMonth() + 1).padStart(2, '0')
-          const day = String(currentDate.getDate()).padStart(2, '0')
-          const dateStr = `${year}-${month}-${day}`
-          const dayData = dailyMap.get(dateStr)
-          
-          // Check if this is the 1st of a month
-          const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}`
-          const monthAbbr = format(currentDate, 'MMM')
-          
-          if (currentDate.getDate() === 1 && !monthMap.has(monthKey)) {
-            // Update to always use the last occurrence of each month abbreviation
-            monthAbbrMap.set(monthAbbr, week)
-            monthMap.set(monthKey, true)
-          }
-          
-          weekDays.push({
-            date: dateStr,
-            dateObj: new Date(currentDate),
-            ...dayData
-          })
-        } else {
-          weekDays.push(null)
-        }
-      }
-      
-      grid.push(weekDays)
-    }
-    
-    // Convert monthAbbrMap to monthLabels array (showing only the last occurrence of each month)
-    monthLabels.push(...Array.from(monthAbbrMap.entries()).map(([month, week]) => ({
-      week,
-      month
-    })).sort((a, b) => a.week - b.week))
-
-    // Get color based on activity level (GitHub-style)
-    const getSquareColor = (day) => {
-      if (!day || !day.total || day.total === 0) {
-        return '#ebedf0' // No activity - very light gray
-      }
-      
-      // For win days (more wins than losses)
-      if (day.outcome === 'win') {
-        if (day.total >= 5) return '#216e39' // Very high - darkest green
-        if (day.total >= 3) return '#30a14e' // High - dark green
-        if (day.total >= 2) return '#40c463' // Medium - medium green
-        return '#9be9a8' // Low - light green
-      }
-      
-      // For loss days (more losses than wins)
-      if (day.outcome === 'loss') {
-        if (day.total >= 5) return '#8b1a1a' // Very high - darkest red
-        if (day.total >= 3) return '#c53030' // High - dark red
-        if (day.total >= 2) return '#e53e3e' // Medium - medium red
-        return '#fc8181' // Low - light red
-      }
-      
-      // Neutral (equal wins/losses)
-      return '#d1d5db' // Light gray
-    }
-
-    return (
-      <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-        <h2 className="text-2xl font-bold mb-2 uppercase">Trading Activity</h2>
-        <p className="text-sm text-zinc-600 mb-6">Daily win/loss overview</p>
-        
-        <div className="overflow-x-auto">
-          <div className="inline-block relative">
-            {/* Month labels row */}
-            <div className="relative mb-2" style={{ height: '15px', paddingLeft: '27px' }}>
-              {monthLabels.map((label, idx) => {
-                // Calculate position: each week is 14px wide (11px square + 3px gap)
-                const leftPosition = label.week * 14
-                return (
-                  <div
-                    key={idx}
-                    className="text-xs text-zinc-600 absolute whitespace-nowrap"
-                    style={{
-                      left: `${leftPosition}px`
-                    }}
-                  >
-                    {label.month}
-                  </div>
-                )
-              })}
-            </div>
-            
-            {/* Main grid */}
-            <div className="flex gap-[3px]">
-              {/* Day labels column */}
-              <div className="flex flex-col gap-[3px] mr-2">
-                {dayLabels.map((label, idx) => (
-                  <div
-                    key={idx}
-                    className="text-xs text-zinc-600 text-right pr-2"
-                    style={{ width: '25px', height: '11px', lineHeight: '11px' }}
-                  >
-                    {label}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Weeks (columns) */}
-              {grid.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-[3px]">
-                  {week.map((day, dayIndex) => {
-                    const color = getSquareColor(day)
-                    const tooltip = day
-                      ? `${format(day.dateObj, 'MMM d, yyyy')}: ${day.wins || 0} wins, ${day.losses || 0} losses`
-                      : ''
-                    
-                    return (
-                      <div
-                        key={dayIndex}
-                        className="cursor-pointer hover:ring-2 hover:ring-zinc-400 hover:ring-offset-1 rounded-sm transition-all"
-                        style={{
-                          width: '11px',
-                          height: '11px',
-                          backgroundColor: color,
-                          borderRadius: '2px'
-                        }}
-                        title={tooltip}
-                      />
-                    )
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="flex items-center gap-4 mt-6 text-xs">
-          <span className="text-zinc-600">Less</span>
-          <div className="flex gap-[3px]">
-            <div style={{ width: '11px', height: '11px', backgroundColor: '#ebedf0', borderRadius: '2px' }} />
-            <div style={{ width: '11px', height: '11px', backgroundColor: '#9be9a8', borderRadius: '2px' }} />
-            <div style={{ width: '11px', height: '11px', backgroundColor: '#40c463', borderRadius: '2px' }} />
-            <div style={{ width: '11px', height: '11px', backgroundColor: '#30a14e', borderRadius: '2px' }} />
-            <div style={{ width: '11px', height: '11px', backgroundColor: '#216e39', borderRadius: '2px' }} />
-          </div>
-          <span className="text-zinc-600">More</span>
-          <div className="ml-6 flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div style={{ width: '11px', height: '11px', backgroundColor: '#40c463', borderRadius: '2px' }} />
-              <span className="text-zinc-600">More wins</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div style={{ width: '11px', height: '11px', backgroundColor: '#e53e3e', borderRadius: '2px' }} />
-              <span className="text-zinc-600">More losses</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div style={{ width: '11px', height: '11px', backgroundColor: '#ebedf0', borderRadius: '2px' }} />
-              <span className="text-zinc-600">No trades</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Transform dailyContribution data to match ContributionGraph component format
+  // The API returns: { date, wins, losses, total, outcome }
+  // Component expects: { date, trades, pnl, wins, losses }
+  const contributionData = dailyContribution.map(day => ({
+    date: day.date,
+    trades: day.total || 0,
+    pnl: day.pnl || 0, // We'll need to calculate this from trades if not available
+    wins: day.wins || 0,
+    losses: day.losses || 0
+  }))
 
   return (
     <>
@@ -392,7 +188,47 @@ export default function Analytics() {
         {/* Charts */}
         <div className="space-y-12">
           {/* Contribution Graph */}
-          <ContributionGraph />
+          <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h2 className="text-2xl font-bold uppercase">Trading Activity</h2>
+                <p className="text-sm text-zinc-600 mt-1">Daily win/loss overview</p>
+              </div>
+              {/* Mode Toggle */}
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={() => setGraphMode('activity')}
+                  className={`px-3 py-1 text-xs font-bold border-2 border-black transition-all ${
+                    graphMode === 'activity' 
+                      ? 'bg-zinc-200 text-black' 
+                      : 'bg-white text-zinc-600 hover:bg-zinc-50'
+                  }`}
+                  aria-label="Activity mode"
+                >
+                  Activity
+                </button>
+                <button
+                  onClick={() => setGraphMode('pnl')}
+                  className={`px-3 py-1 text-xs font-bold border-2 border-black transition-all ${
+                    graphMode === 'pnl' 
+                      ? 'bg-zinc-200 text-black' 
+                      : 'bg-white text-zinc-600 hover:bg-zinc-50'
+                  }`}
+                  aria-label="P&L mode"
+                >
+                  P&L
+                </button>
+              </div>
+            </div>
+            <ContributionGraph
+              data={contributionData}
+              mode={graphMode}
+              title=""
+              subtitle=""
+              showWeekends={true}
+              showLegend={true}
+            />
+          </div>
 
           {/* Equity Curve */}
           <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
