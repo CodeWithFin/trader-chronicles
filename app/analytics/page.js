@@ -142,7 +142,7 @@ export default function Analytics() {
           <MetricCard
             title="Total Trades"
             value={totalTrades}
-            subtitle="All backtest entries"
+            subtitle="All trade entries"
           />
           <MetricCard
             title="Win Rate"
