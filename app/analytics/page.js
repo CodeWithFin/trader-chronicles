@@ -27,14 +27,19 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [graphMode, setGraphMode] = useState('activity') // 'activity' | 'pnl'
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     fetchAnalytics()
   }, [])
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      } else {
+        setIsRefreshing(true)
+      }
       const response = await fetch('/api/analytics')
       if (!response.ok) throw new Error('Failed to fetch analytics')
       
@@ -48,10 +53,19 @@ export default function Analytics() {
       console.error(err)
     } finally {
       setLoading(false)
+      setIsRefreshing(false)
     }
   }
 
-  if (loading) {
+  // Refresh analytics in the background without blocking UI
+  const refreshAnalytics = () => {
+    fetchAnalytics(false)
+  }
+
+  // Show cached data while refreshing in background
+  const displayAnalytics = analytics
+
+  if (loading && !analytics) {
     return (
       <>
         <Navbar />
@@ -62,7 +76,7 @@ export default function Analytics() {
     )
   }
 
-  if (error || !analytics) {
+  if (error && !analytics) {
     return (
       <>
         <Navbar />
@@ -70,6 +84,17 @@ export default function Analytics() {
           <div className="border-4 border-black bg-red-50 p-6 text-red-900">
             {error || 'No analytics data available'}
           </div>
+        </div>
+      </>
+    )
+  }
+
+  if (!displayAnalytics) {
+    return (
+      <>
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 py-16">
+          <div className="text-center text-xl font-bold">Loading analytics...</div>
         </div>
       </>
     )
@@ -90,7 +115,7 @@ export default function Analytics() {
     winRateByStrategy,
     winRateByTag,
     dailyContribution = []
-  } = analytics
+  } = displayAnalytics
 
   const equityData = equityCurve.map((point, index) => ({
     date: format(new Date(point.date), 'MMM d'),
@@ -132,10 +157,26 @@ export default function Analytics() {
     <>
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-16">
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Analytics Dashboard</h1>
-          <div className="w-full h-1 bg-black"></div>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Analytics Dashboard</h1>
+            <div className="w-full h-1 bg-black"></div>
+          </div>
+          <button
+            onClick={refreshAnalytics}
+            disabled={isRefreshing}
+            className="px-4 py-2 border-2 border-black bg-white text-sm font-bold hover:bg-zinc-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh analytics data"
+          >
+            {isRefreshing ? 'Refreshing...' : '🔄 Refresh'}
+          </button>
         </div>
+        
+        {error && analytics && (
+          <div className="mb-6 p-4 border-2 border-black bg-yellow-50 text-yellow-900">
+            {error} (showing cached data)
+          </div>
+        )}
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -386,4 +427,5 @@ export default function Analytics() {
     </>
   )
 }
+
 

@@ -15,9 +15,27 @@ export default function TradeForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
+  // Helper to format time as HH:mm
+  const formatTime = (date) => {
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${hours}:${minutes}`
+  }
+
+  // Helper to combine date and time
+  const combineDateTime = (date, time) => {
+    const [hours, minutes] = time.split(':').map(Number)
+    const combined = new Date(date)
+    combined.setHours(hours || 0, minutes || 0, 0, 0)
+    return combined
+  }
+
+  const now = new Date()
   const [formData, setFormData] = useState({
-    dateTime: new Date(),
-    endDate: new Date(),
+    startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    startTime: formatTime(now),
+    endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    endTime: formatTime(now),
     assetPair: '',
     direction: 'Long',
     entryPrice: '',
@@ -91,10 +109,17 @@ export default function TradeForm() {
     })
   }
 
-  const handleDateChange = (date) => {
+  const handleStartDateChange = (date) => {
     setFormData(prev => ({
       ...prev,
-      dateTime: date
+      startDate: date
+    }))
+  }
+
+  const handleStartTimeChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      startTime: e.target.value
     }))
   }
 
@@ -102,6 +127,13 @@ export default function TradeForm() {
     setFormData(prev => ({
       ...prev,
       endDate: date
+    }))
+  }
+
+  const handleEndTimeChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      endTime: e.target.value
     }))
   }
 
@@ -125,9 +157,13 @@ export default function TradeForm() {
         throw new Error('Valid P&L amount is required')
       }
 
+      // Combine date and time
+      const dateTime = combineDateTime(formData.startDate, formData.startTime)
+      const endDateTime = combineDateTime(formData.endDate, formData.endTime)
+
       const payload = {
-        dateTime: formData.dateTime.toISOString(),
-        endDate: formData.endDate.toISOString(),
+        dateTime: dateTime.toISOString(),
+        endDate: endDateTime.toISOString(),
         assetPair: formData.assetPair.trim(),
         direction: formData.direction,
         entryPrice: parseFloat(formData.entryPrice),
@@ -206,24 +242,38 @@ export default function TradeForm() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold mb-2 uppercase">Start Date & Time</label>
-                    <DatePicker
-                      selected={formData.dateTime}
-                      onChange={handleDateChange}
-                      showTimeSelect
-                      dateFormat="MMMM d, yyyy h:mm aa"
-                      className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <DatePicker
+                        selected={formData.startDate}
+                        onChange={handleStartDateChange}
+                        dateFormat="MMMM d, yyyy"
+                        className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                      />
+                      <input
+                        type="time"
+                        value={formData.startTime}
+                        onChange={handleStartTimeChange}
+                        className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                      />
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-bold mb-2 uppercase">End Date & Time</label>
-                    <DatePicker
-                      selected={formData.endDate}
-                      onChange={handleEndDateChange}
-                      showTimeSelect
-                      dateFormat="MMMM d, yyyy h:mm aa"
-                      className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <DatePicker
+                        selected={formData.endDate}
+                        onChange={handleEndDateChange}
+                        dateFormat="MMMM d, yyyy"
+                        className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                      />
+                      <input
+                        type="time"
+                        value={formData.endTime}
+                        onChange={handleEndTimeChange}
+                        className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                      />
+                    </div>
                   </div>
                 </div>
 

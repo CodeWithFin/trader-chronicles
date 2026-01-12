@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import Navbar from '@/components/Navbar'
@@ -14,6 +14,7 @@ export default function TradeLog() {
   const [selectedTrade, setSelectedTrade] = useState(null)
   const [deletingTradeId, setDeletingTradeId] = useState(null)
   const [deletingAll, setDeletingAll] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const [filters, setFilters] = useState({
     assetPair: '',
     result: '',
@@ -25,9 +26,11 @@ export default function TradeLog() {
     fetchTrades()
   }, [filters])
 
-  const fetchTrades = async () => {
+  const fetchTrades = async (showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       const params = new URLSearchParams()
       Object.entries(filters).forEach(([key, value]) => {
         if (value) params.append(key, value)
@@ -37,22 +40,30 @@ export default function TradeLog() {
       if (!response.ok) throw new Error('Failed to fetch trades')
       
       const data = await response.json()
-      setTrades(data.trades || [])
-      setError('')
+      // Use startTransition for non-urgent state updates
+      startTransition(() => {
+        setTrades(data.trades || [])
+        setError('')
+      })
     } catch (err) {
       setError('Failed to fetch trades')
       console.error(err)
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    // Use startTransition for filter changes to keep UI responsive
+    startTransition(() => {
+      setFilters(prev => ({
+        ...prev,
+        [name]: value
+      }))
+    })
   }
 
   const handleSort = (field) => {
@@ -89,6 +100,15 @@ export default function TradeLog() {
       return
     }
 
+    // Optimistic update: Remove from UI immediately
+    const tradeToDelete = trades.find(t => t.id === tradeId)
+    setTrades(prevTrades => prevTrades.filter(trade => trade.id !== tradeId))
+    
+    // Close modal if the deleted trade was selected
+    if (selectedTrade && selectedTrade.id === tradeId) {
+      setSelectedTrade(null)
+    }
+
     try {
       setDeletingTradeId(tradeId)
       const response = await fetch(`/api/trades/${tradeId}`, {
@@ -101,16 +121,20 @@ export default function TradeLog() {
         throw new Error(errorData.error || 'Failed to delete trade')
       }
 
-      // Remove the trade from the list
-      setTrades(prevTrades => prevTrades.filter(trade => trade.id !== tradeId))
-      
-      // Close modal if the deleted trade was selected
-      if (selectedTrade && selectedTrade.id === tradeId) {
-        setSelectedTrade(null)
-      }
-      
       setError('')
     } catch (err) {
+      // Rollback on error: Restore the trade
+      if (tradeToDelete) {
+        setTrades(prevTrades => {
+          // Insert back in the correct position (sorted by date_time desc)
+          const newTrades = [...prevTrades, tradeToDelete]
+          return newTrades.sort((a, b) => {
+            const dateA = new Date(a.date_time)
+            const dateB = new Date(b.date_time)
+            return filters.sortOrder === 'asc' ? dateA - dateB : dateB - dateA
+          })
+        })
+      }
       setError(err.message || 'Failed to delete trade')
       console.error(err)
     } finally {
@@ -143,6 +167,12 @@ export default function TradeLog() {
       return
     }
 
+    // Optimistic update: Clear UI immediately
+    const tradesBackup = [...trades]
+    const selectedTradeBackup = selectedTrade
+    setTrades([])
+    setSelectedTrade(null)
+
     try {
       setDeletingAll(true)
       setError('')
@@ -158,14 +188,12 @@ export default function TradeLog() {
       }
 
       const result = await response.json()
-      
-      // Clear all trades from state
-      setTrades([])
-      setSelectedTrade(null)
-      
-      alert(`Successfully deleted ${result.deletedCount || trades.length} trades.`)
+      alert(`Successfully deleted ${result.deletedCount || tradesBackup.length} trades.`)
       setError('')
     } catch (err) {
+      // Rollback on error: Restore all trades
+      setTrades(tradesBackup)
+      setSelectedTrade(selectedTradeBackup)
       setError(err.message || 'Failed to delete all trades')
       console.error(err)
       alert(`Error: ${err.message}`)
@@ -175,7 +203,10 @@ export default function TradeLog() {
   }
 
 
-  if (loading) {
+  // Show cached data while loading if available
+  const displayTrades = trades.length > 0 ? trades : []
+  
+  if (loading && displayTrades.length === 0) {
     return (
       <>
         <Navbar />
@@ -202,7 +233,7 @@ export default function TradeLog() {
             >
               + New Trade
             </Link>
-            {trades.length > 0 && (
+            {displayTrades.length > 0 && (
               <button
                 onClick={handleDeleteAll}
                 disabled={deletingAll}
@@ -250,6 +281,12 @@ export default function TradeLog() {
             {error}
           </div>
         )}
+        
+        {(loading || isPending) && displayTrades.length > 0 && (
+          <div className="mb-6 p-3 border-2 border-black bg-blue-50 text-blue-900 text-sm">
+            🔄 Refreshing trades...
+          </div>
+        )}
 
         {/* Table */}
         <div className="border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-x-auto">
@@ -273,14 +310,14 @@ export default function TradeLog() {
               </tr>
             </thead>
             <tbody>
-              {trades.length === 0 ? (
+              {displayTrades.length === 0 && !loading ? (
                 <tr>
                   <td colSpan="8" className="px-4 py-8 text-center text-zinc-600">
                     No trades found. <Link href="/trades/new" className="text-orange-600 font-bold hover:underline">Create your first trade entry</Link>
                   </td>
                 </tr>
               ) : (
-                trades.map((trade) => (
+                displayTrades.map((trade) => (
                   <tr key={trade.id} className="border-b border-zinc-200 hover:bg-zinc-50">
                     <td className="px-4 py-3">{format(new Date(trade.date_time), 'MMM d, yyyy HH:mm')}</td>
                     <td className="px-4 py-3 font-semibold">{trade.asset_pair}</td>
