@@ -112,6 +112,7 @@ export default function Analytics() {
     profitFactor,
     rMultipleDistribution,
     equityCurve,
+    winRateByAssetPair,
     winRateByStrategy,
     winRateByTag,
     dailyContribution = []
@@ -126,6 +127,11 @@ export default function Analytics() {
 
   const strategyData = Object.entries(winRateByStrategy).map(([strategy, rate]) => ({
     name: strategy,
+    winRate: parseFloat((rate || 0).toFixed(2))
+  }))
+
+  const assetPairData = Object.entries(winRateByAssetPair || {}).map(([assetPair, rate]) => ({
+    name: assetPair,
     winRate: parseFloat((rate || 0).toFixed(2))
   }))
 
@@ -382,6 +388,42 @@ export default function Analytics() {
                     formatter={(value) => `${value}%`}
                   />
                   <Bar dataKey="winRate" fill="#ea580c" stroke="#000" strokeWidth={2} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Win Rate by Currency Pair */}
+          {assetPairData.length > 0 && (
+            <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+              <h2 className="text-2xl font-bold mb-6 uppercase">Win Rate by Currency Pair</h2>
+              <p className="text-sm text-zinc-600 mb-6">Each asset pair is tracked with its own win rate</p>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={assetPairData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
+                    stroke="#000"
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                  />
+                  <YAxis
+                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
+                    stroke="#000"
+                    domain={[0, 100]}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '2px solid #000',
+                      borderRadius: '0',
+                      fontFamily: 'JetBrains Mono'
+                    }}
+                    formatter={(value) => `${value}%`}
+                  />
+                  <Bar dataKey="winRate" fill="#16a34a" stroke="#000" strokeWidth={2} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

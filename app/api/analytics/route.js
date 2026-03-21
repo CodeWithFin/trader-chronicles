@@ -51,6 +51,7 @@ export async function GET() {
         profitFactor: 0,
         rMultipleDistribution: [],
         equityCurve: [],
+        winRateByAssetPair: {},
         winRateByStrategy: {},
         winRateByTag: {},
         dailyContribution: []
@@ -193,6 +194,24 @@ export async function GET() {
       winRateByStrategy[strategy] = (stats.wins / stats.total) * 100
     })
 
+    // Win Rate by Currency Pair / Asset Pair
+    const assetPairStats = {}
+    parsedTrades.forEach(trade => {
+      const assetPair = (trade.asset_pair || '').trim() || 'Unspecified'
+      if (!assetPairStats[assetPair]) {
+        assetPairStats[assetPair] = { total: 0, wins: 0 }
+      }
+      assetPairStats[assetPair].total++
+      if (trade.result === 'Win') {
+        assetPairStats[assetPair].wins++
+      }
+    })
+
+    const winRateByAssetPair = {}
+    Object.entries(assetPairStats).forEach(([assetPair, stats]) => {
+      winRateByAssetPair[assetPair] = (stats.wins / stats.total) * 100
+    })
+
     // Win Rate by Tag
     const tagStats = {}
     parsedTrades.forEach(trade => {
@@ -271,6 +290,7 @@ export async function GET() {
       profitFactor,
       rMultipleDistribution,
       equityCurve,
+      winRateByAssetPair,
       winRateByStrategy,
       winRateByTag,
       // Add P&L-based metrics for simplified form
