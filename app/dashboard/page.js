@@ -4,35 +4,29 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 
 export default function Dashboard() {
-  const heroImageUrl = 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
-
   return (
     <>
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
         <section className="w-full relative mb-20">
-          <div
-            className="w-full border-4 border-black p-6 md:p-16 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroImageUrl})` }}
-          >
-            <div className="absolute inset-0 bg-black/60"></div>
+          <div className="w-full border-4 border-black p-6 md:p-16 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden bg-white">
 
-            <div className="absolute top-0 right-0 p-4 opacity-20 pointer-events-none z-10 text-white">
+            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none z-10 text-black">
               <svg className="w-64 h-64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
 
             <div className="relative z-10">
-              <h1 className="text-6xl md:text-9xl font-bold tracking-tighter uppercase mb-2 text-white">Trader Chronicles</h1>
+              <h1 className="text-6xl md:text-9xl font-bold tracking-tighter uppercase mb-2 text-black">Trader Chronicles</h1>
               <div className="w-full h-1 bg-orange-500 mb-8"></div>
 
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                 <div className="max-w-xl">
-                  <h2 className="text-3xl md:text-5xl font-semibold tracking-tight uppercase mb-4 text-white">
+                  <h2 className="text-3xl md:text-5xl font-semibold tracking-tight uppercase mb-4 text-black">
                     Trade Journal
                   </h2>
-                  <p className="text-lg md:text-xl text-zinc-100 leading-relaxed font-medium">
+                  <p className="text-lg md:text-xl text-zinc-700 leading-relaxed font-medium">
                     Log your trades, track performance, and analyze your trading activity with comprehensive data visualization and analytics.
                   </p>
                 </div>

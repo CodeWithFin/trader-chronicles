@@ -1,8 +1,8 @@
-'use server';
-
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
@@ -19,69 +19,37 @@ export async function GET(request) {
       }
     );
 
-    // Get all users
-    const { data: users, error: usersError } = await supabase
-      .from('users')
-      .select('id, username, created_at')
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.rpc('get_public_trader_stats');
 
-    if (usersError) {
-      console.error('Error fetching users:', usersError);
-      return NextResponse.json({ error: 'Failed to fetch traders' }, { status: 500 });
+    if (error) {
+      console.error('Error fetching trader stats:', error);
+      return NextResponse.json(
+        {
+          error: 'Failed to fetch traders',
+          details: 'Run supabase/traders_visibility.sql in Supabase SQL Editor to enable public trader stats.',
+        },
+        { status: 500 }
+      );
     }
 
-    // For each user, calculate their stats
-    const tradersWithStats = await Promise.all(
-      users.map(async (user) => {
-        const { data: trades = [] } = await supabase
-          .from('backtest_entries')
-          .select('*')
-          .eq('user_id', user.id);
+    const traders = (data || []).map((row) => ({
+      id: row.id,
+      username: row.username,
+      totalTrades: row.total_trades,
+      winRate: row.win_rate,
+      bestAssetPair: row.best_asset_pair,
+      joinedAt: row.joined_at,
+    }));
 
-        // Calculate win rate
-        const totalTrades = trades.length;
-        const wins = trades.filter((t) => t.result === 'Win').length;
-        const winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
-
-        // Find best asset pair (highest win rate)
-        const assetPairStats = {};
-        trades.forEach((trade) => {
-          if (!assetPairStats[trade.asset_pair]) {
-            assetPairStats[trade.asset_pair] = { wins: 0, total: 0 };
-          }
-          assetPairStats[trade.asset_pair].total += 1;
-          if (trade.result === 'Win') {
-            assetPairStats[trade.asset_pair].wins += 1;
-          }
-        });
-
-        let bestAssetPair = null;
-        let bestWinRate = 0;
-        Object.entries(assetPairStats).forEach(([pair, stats]) => {
-          const rate = stats.total > 0 ? (stats.wins / stats.total) * 100 : 0;
-          if (rate > bestWinRate) {
-            bestWinRate = rate;
-            bestAssetPair = pair;
-          }
-        });
-
-        return {
-          id: user.id,
-          username: user.username,
-          totalTrades,
-          winRate,
-          bestAssetPair,
-          joinedAt: user.created_at,
-        };
-      })
-    );
-
-    // Sort by total trades (descending) as a ranking metric
-    tradersWithStats.sort((a, b) => b.totalTrades - a.totalTrades);
-
-    return NextResponse.json(tradersWithStats);
+    return NextResponse.json(traders);
   } catch (error) {
     console.error('Traders API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details: 'Run supabase/traders_visibility.sql in Supabase SQL Editor to enable public trader stats.',
+      },
+      { status: 500 }
+    );
   }
 }

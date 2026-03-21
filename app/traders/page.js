@@ -10,16 +10,21 @@ export default function TradersPage() {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('trades');
   const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchTraders = async () => {
       try {
         const res = await fetch('/api/traders');
-        if (!res.ok) throw new Error('Failed to fetch traders');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => null);
+          throw new Error(errorData?.details || 'Failed to fetch traders');
+        }
         const data = await res.json();
         setTraders(data);
       } catch (error) {
         console.error('Error fetching traders:', error);
+        setError(error.message || 'Unable to load traders right now.');
       } finally {
         setLoading(false);
       }
@@ -42,7 +47,7 @@ export default function TradersPage() {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-white text-black">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
@@ -50,10 +55,16 @@ export default function TradersPage() {
           <h1 className="text-4xl md:text-5xl font-bold mb-2 border-b-4 border-[#ea580c] pb-4 inline-block">
             Traders Directory
           </h1>
-          <p className="text-zinc-400 mt-4">
+          <p className="text-zinc-600 mt-4">
             Discover and connect with other traders. View their performance metrics and message them for insights.
           </p>
         </div>
+
+        {error && (
+          <div className="mb-8 border-2 border-black bg-orange-50 p-4 text-sm">
+            {error}
+          </div>
+        )}
 
         {/* Search & Sort Bar */}
         <div className="mb-8 flex flex-col md:flex-row gap-4">
@@ -62,12 +73,12 @@ export default function TradersPage() {
             placeholder="Search traders by username..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-zinc-900 border-2 border-zinc-700 rounded-lg px-4 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-[#ea580c]"
+            className="flex-1 bg-white border-2 border-black rounded-lg px-4 py-2 text-black placeholder-zinc-500 focus:outline-none focus:border-[#ea580c]"
           />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="bg-zinc-900 border-2 border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#ea580c]"
+            className="bg-white border-2 border-black rounded-lg px-4 py-2 text-black focus:outline-none focus:border-[#ea580c]"
           >
             <option value="trades">Sort by Trades</option>
             <option value="winrate">Sort by Win Rate</option>
@@ -82,24 +93,24 @@ export default function TradersPage() {
           </div>
         ) : filteredTraders.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-zinc-400 text-lg">No traders found.</p>
+            <p className="text-zinc-600 text-lg">No traders found.</p>
           </div>
         ) : (
           <>
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-zinc-900 border-2 border-zinc-700 rounded-lg p-6">
-                <p className="text-zinc-400 text-sm mb-2">Total Traders</p>
+              <div className="bg-white border-2 border-black rounded-lg p-6">
+                <p className="text-zinc-600 text-sm mb-2">Total Traders</p>
                 <p className="text-3xl font-bold text-[#ea580c]">{traders.length}</p>
               </div>
-              <div className="bg-zinc-900 border-2 border-zinc-700 rounded-lg p-6">
-                <p className="text-zinc-400 text-sm mb-2">Total Trades Logged</p>
+              <div className="bg-white border-2 border-black rounded-lg p-6">
+                <p className="text-zinc-600 text-sm mb-2">Total Trades Logged</p>
                 <p className="text-3xl font-bold text-[#ea580c]">
                   {traders.reduce((sum, t) => sum + t.totalTrades, 0)}
                 </p>
               </div>
-              <div className="bg-zinc-900 border-2 border-zinc-700 rounded-lg p-6">
-                <p className="text-zinc-400 text-sm mb-2">Avg Win Rate</p>
+              <div className="bg-white border-2 border-black rounded-lg p-6">
+                <p className="text-zinc-600 text-sm mb-2">Avg Win Rate</p>
                 <p className="text-3xl font-bold text-[#ea580c]">
                   {traders.length > 0
                     ? Math.round(traders.reduce((sum, t) => sum + t.winRate, 0) / traders.length)
@@ -114,11 +125,11 @@ export default function TradersPage() {
               {filteredTraders.map((trader) => (
                 <div
                   key={trader.id}
-                  className="bg-zinc-900 border-2 border-zinc-700 rounded-lg p-6 hover:border-[#ea580c] transition-colors group"
+                  className="bg-white border-2 border-black rounded-lg p-6 hover:border-[#ea580c] transition-colors group"
                 >
                   {/* Trader Header */}
-                  <div className="mb-4 pb-4 border-b-2 border-zinc-700">
-                    <h3 className="text-xl font-bold text-white group-hover:text-[#ea580c] transition-colors">
+                  <div className="mb-4 pb-4 border-b-2 border-zinc-200">
+                    <h3 className="text-xl font-bold text-black group-hover:text-[#ea580c] transition-colors">
                       {trader.username}
                     </h3>
                     <p className="text-zinc-500 text-xs mt-1">
@@ -135,8 +146,8 @@ export default function TradersPage() {
                     <div>
                       <p className="text-zinc-500 text-xs uppercase mb-1">Win Rate</p>
                       <div className="flex items-center gap-3">
-                        <p className="text-2xl font-bold text-white">{trader.winRate}%</p>
-                        <div className="flex-1 bg-zinc-800 rounded-full h-2 overflow-hidden">
+                        <p className="text-2xl font-bold text-black">{trader.winRate}%</p>
+                        <div className="flex-1 bg-zinc-200 rounded-full h-2 overflow-hidden">
                           <div
                             className="bg-[#ea580c] h-full transition-all"
                             style={{ width: `${trader.winRate}%` }}
@@ -147,26 +158,24 @@ export default function TradersPage() {
                     {trader.bestAssetPair && (
                       <div>
                         <p className="text-zinc-500 text-xs uppercase mb-1">Best Asset Pair</p>
-                        <p className="text-lg font-semibold text-white">{trader.bestAssetPair}</p>
+                        <p className="text-lg font-semibold text-black">{trader.bestAssetPair}</p>
                       </div>
                     )}
                   </div>
 
                   {/* Action Buttons */}
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        /* TODO: View profile details */
-                      }}
-                      className="flex-1 bg-[#ea580c] text-white font-bold py-2 px-4 rounded border-2 border-[#ea580c] hover:bg-zinc-950 transition-colors"
-                    >
-                      View Profile
-                    </button>
+                      <Link
+                        href={`/traders/${trader.id}`}
+                        className="flex-1 bg-[#ea580c] text-white font-bold py-2 px-4 rounded border-2 border-[#ea580c] hover:bg-zinc-950 transition-colors text-center"
+                      >
+                        View Profile
+                      </Link>
                     <button
                       onClick={() => {
                         /* TODO: Message trader */
                       }}
-                      className="flex-1 bg-zinc-800 text-white font-bold py-2 px-4 rounded border-2 border-zinc-700 hover:border-[#ea580c] transition-colors"
+                      className="flex-1 bg-white text-black font-bold py-2 px-4 rounded border-2 border-black hover:border-[#ea580c] transition-colors"
                     >
                       Message
                     </button>
@@ -180,7 +189,7 @@ export default function TradersPage() {
         {/* Empty state */}
         {!loading && traders.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-zinc-400 text-lg">
+            <p className="text-zinc-600 text-lg">
               No traders yet. Be the first to start logging your trades!
             </p>
           </div>
