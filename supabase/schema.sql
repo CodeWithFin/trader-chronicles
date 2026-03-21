@@ -55,6 +55,9 @@ ALTER TABLE public.backtest_entries ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" ON public.users
   FOR SELECT USING (auth.uid() = id);
 
+CREATE POLICY "Public can view all user profiles" ON public.users
+  FOR SELECT USING (true);
+
 CREATE POLICY "Users can update own profile" ON public.users
   FOR UPDATE USING (auth.uid() = id);
 

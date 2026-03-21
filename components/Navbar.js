@@ -76,6 +76,15 @@ export default function Navbar() {
               </svg>
               Analytics
             </Link>
+            <Link
+              href="/traders"
+              className="flex items-center gap-2 px-5 py-2 border-2 border-black bg-white text-sm font-semibold hover:bg-zinc-100 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 12H9m4 5h4m-11 2.476A13.026 13.026 0 001.5 15M3 21h18" />
+              </svg>
+              Traders
+            </Link>
             <button
               onClick={handleLogout}
               className="inline-flex px-5 py-2 border-2 border-black bg-orange-600 text-white text-sm font-semibold hover:bg-orange-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
@@ -169,6 +178,13 @@ export default function Navbar() {
                   className="w-full px-4 py-3 border-2 border-black bg-white text-sm font-semibold hover:bg-zinc-100 transition-colors"
                 >
                   Analytics
+                </Link>
+                <Link
+                  href="/traders"
+                  onClick={closeMobileMenu}
+                  className="w-full px-4 py-3 border-2 border-black bg-white text-sm font-semibold hover:bg-zinc-100 transition-colors"
+                >
+                  Traders
                 </Link>
                 <button
                   type="button"
