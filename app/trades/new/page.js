@@ -12,9 +12,12 @@ import 'react-datepicker/dist/react-datepicker.css'
 
 export default function TradeForm() {
   const router = useRouter()
+  const screenshotBucket = process.env.NEXT_PUBLIC_SUPABASE_SCREENSHOT_BUCKET || 'trade-screenshots'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [screenshotFile, setScreenshotFile] = useState(null)
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
   // Helper to format time as HH:mm
   const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0')
@@ -137,12 +140,62 @@ export default function TradeForm() {
     }))
   }
 
+  const handleScreenshotChange = (e) => {
+    const selectedFile = e.target.files?.[0] || null
+    setScreenshotFile(selectedFile)
+  }
+
+  const uploadScreenshot = async (userId) => {
+    if (!screenshotFile) {
+      return ''
+    }
+
+    const maxFileSize = 5 * 1024 * 1024
+    if (!screenshotFile.type.startsWith('image/')) {
+      throw new Error('Screenshot must be an image file')
+    }
+    if (screenshotFile.size > maxFileSize) {
+      throw new Error('Screenshot must be 5MB or smaller')
+    }
+
+    const fileExt = screenshotFile.name.split('.').pop()?.toLowerCase() || 'png'
+    const safeName = screenshotFile.name
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-zA-Z0-9-_]/g, '_')
+      .slice(0, 60)
+    const filePath = `${userId}/${Date.now()}-${safeName}.${fileExt}`
+
+    setUploadingScreenshot(true)
+    const { error: uploadError } = await supabase.storage
+      .from(screenshotBucket)
+      .upload(filePath, screenshotFile, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (uploadError) {
+      throw new Error(uploadError.message || 'Failed to upload screenshot')
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(screenshotBucket)
+      .getPublicUrl(filePath)
+
+    setUploadingScreenshot(false)
+    return publicUrlData?.publicUrl || ''
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
     try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) {
+        throw new Error('You must be logged in to add a trade')
+      }
+
       // Validate required fields
       if (!formData.assetPair || !formData.assetPair.trim()) {
         throw new Error('Asset/Symbol is required')
@@ -160,6 +213,7 @@ export default function TradeForm() {
       // Combine date and time
       const dateTime = combineDateTime(formData.startDate, formData.startTime)
       const endDateTime = combineDateTime(formData.endDate, formData.endTime)
+      const screenshotUrl = await uploadScreenshot(user.id)
 
       const payload = {
         dateTime: dateTime.toISOString(),
@@ -177,7 +231,7 @@ export default function TradeForm() {
         strategyUsed: '',
         setupTags: [],
         notes: '',
-        screenshotUrl: ''
+        screenshotUrl
       }
 
       console.log('Submitting payload:', payload)
@@ -203,7 +257,9 @@ export default function TradeForm() {
     } catch (err) {
       console.error('Form submission error:', err)
       setError(err.message || 'Failed to create trade entry')
+    } finally {
       setLoading(false)
+      setUploadingScreenshot(false)
     }
   }
 
@@ -383,13 +439,31 @@ export default function TradeForm() {
               </div>
             </div>
 
+            {/* Screenshot */}
+            <div>
+              <h2 className="text-xl font-bold mb-4 uppercase">Screenshot (Optional)</h2>
+              <div>
+                <label className="block text-sm font-bold mb-2 uppercase">Attach Chart Screenshot</label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  onChange={handleScreenshotChange}
+                  className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                />
+                <p className="text-xs text-gray-600 mt-1">PNG, JPG, or WEBP. Max 5MB.</p>
+                {screenshotFile && (
+                  <p className="text-xs text-gray-700 mt-2">Selected: {screenshotFile.name}</p>
+                )}
+              </div>
+            </div>
+
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || uploadingScreenshot}
                 className="flex-1 px-6 py-4 border-4 border-black bg-orange-600 text-white text-lg font-bold hover:bg-orange-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Saving...' : 'Save Trade'}
+                {uploadingScreenshot ? 'Uploading Screenshot...' : loading ? 'Saving...' : 'Save Trade'}
               </button>
               <Link
                 href="/trades"

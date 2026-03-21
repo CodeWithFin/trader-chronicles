@@ -9,32 +9,26 @@ export default function Dashboard() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
         <section className="w-full relative mb-20">
-          <div className="w-full border-4 border-black bg-white p-6 md:p-16 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+          <div className="w-full border-4 border-black p-6 md:p-16 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden bg-white">
+
+            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none z-10 text-black">
               <svg className="w-64 h-64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
 
             <div className="relative z-10">
-              <h1 className="text-6xl md:text-9xl font-bold tracking-tighter uppercase mb-2">Trader Chronicles</h1>
-              <div className="w-full h-1 bg-black mb-8"></div>
+              <h1 className="text-6xl md:text-9xl font-bold tracking-tighter uppercase mb-2 text-black">Trader Chronicles</h1>
+              <div className="w-full h-1 bg-orange-500 mb-8"></div>
 
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                 <div className="max-w-xl">
-                  <h2 className="text-3xl md:text-5xl font-semibold tracking-tight uppercase mb-4">
+                  <h2 className="text-3xl md:text-5xl font-semibold tracking-tight uppercase mb-4 text-black">
                     Trade Journal
                   </h2>
-                  <p className="text-lg md:text-xl text-zinc-600 leading-relaxed font-medium">
+                  <p className="text-lg md:text-xl text-zinc-700 leading-relaxed font-medium">
                     Log your trades, track performance, and analyze your trading activity with comprehensive data visualization and analytics.
                   </p>
-                </div>
-
-                <div className="inline-flex items-center gap-3 bg-black text-white px-6 py-3 border-2 border-black shadow-[4px_4px_0px_0px_#ea580c] transform -rotate-1 hover:rotate-0 transition-transform cursor-default">
-                  <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span className="text-sm font-semibold tracking-wide">POWERED BY SUPABASE</span>
                 </div>
               </div>
             </div>

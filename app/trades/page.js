@@ -288,98 +288,80 @@ export default function TradeLog() {
           </div>
         )}
 
-        {/* Table */}
-        <div className="border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-zinc-100 border-b-2 border-black">
-              <tr>
-                <th className="px-4 py-3 text-left font-bold uppercase cursor-pointer hover:bg-zinc-200" onClick={() => handleSort('date_time')}>
-                  Date {filters.sortBy === 'date_time' && (filters.sortOrder === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="px-4 py-3 text-left font-bold uppercase cursor-pointer hover:bg-zinc-200" onClick={() => handleSort('asset_pair')}>
-                  Asset {filters.sortBy === 'asset_pair' && (filters.sortOrder === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="px-4 py-3 text-left font-bold uppercase">Direction</th>
-                <th className="px-4 py-3 text-left font-bold uppercase">Entry</th>
-                <th className="px-4 py-3 text-left font-bold uppercase">Exit</th>
-                <th className="px-4 py-3 text-left font-bold uppercase cursor-pointer hover:bg-zinc-200" onClick={() => handleSort('pnl_absolute')}>
-                  P&L {filters.sortBy === 'pnl_absolute' && (filters.sortOrder === 'asc' ? '↑' : '↓')}
-                </th>
-                <th className="px-4 py-3 text-left font-bold uppercase">Result</th>
-                <th className="px-4 py-3 text-left font-bold uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayTrades.length === 0 && !loading ? (
-                <tr>
-                  <td colSpan="8" className="px-4 py-8 text-center text-zinc-600">
-                    No trades found. <Link href="/trades/new" className="text-orange-600 font-bold hover:underline">Create your first trade entry</Link>
-                  </td>
-                </tr>
-              ) : (
-                displayTrades.map((trade) => (
-                  <tr key={trade.id} className="border-b border-zinc-200 hover:bg-zinc-50">
-                    <td className="px-4 py-3">{format(new Date(trade.date_time), 'MMM d, yyyy HH:mm')}</td>
-                    <td className="px-4 py-3 font-semibold">{trade.asset_pair}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 border-2 ${trade.direction === 'Long' ? 'border-green-600 bg-green-100 text-green-900' : 'border-red-600 bg-red-100 text-red-900'} font-bold text-xs`}>
-                        {trade.direction}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">{trade.entry_price}</td>
-                    <td className="px-4 py-3">{trade.exit_price}</td>
-                    <td className={`px-4 py-3 font-semibold ${(() => {
-                      const correctedPnl = getCorrectedPnl(trade)
-                      return correctedPnl >= 0 ? 'text-green-600' : 'text-red-600'
-                    })()}`}>
-                      {(() => {
-                        const correctedPnl = getCorrectedPnl(trade)
-                        return correctedPnl >= 0 ? '+' : ''
-                      })()}${(() => {
-                        const correctedPnl = getCorrectedPnl(trade)
-                        return correctedPnl
-                      })()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 border-2 ${getResultColor(trade.result)} font-bold text-xs`}>
-                        {trade.result}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setSelectedTrade(trade)}
-                          className="px-3 py-1 border-2 border-black bg-white text-sm font-bold hover:bg-zinc-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px]"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={(e) => handleDelete(trade.id, e)}
-                          disabled={deletingTradeId === trade.id}
-                          className="px-3 py-1 border-2 border-black bg-red-600 text-white text-sm font-bold hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {deletingTradeId === trade.id ? 'Deleting...' : 'Delete'}
-                        </button>
+        {/* Trade List */}
+        {displayTrades.length === 0 && !loading ? (
+          <div className="border-4 border-black bg-white p-8 text-center text-zinc-600 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            No trades found. <Link href="/trades/new" className="text-orange-600 font-bold hover:underline">Create your first trade entry</Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {displayTrades.map((trade) => {
+              const correctedPnl = getCorrectedPnl(trade)
+              const pnlColor = correctedPnl >= 0 ? 'text-green-600' : 'text-red-600'
+
+              return (
+                <div
+                  key={trade.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedTrade(trade)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setSelectedTrade(trade)
+                    }
+                  }}
+                  className="border-4 border-black bg-white p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[1px] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs uppercase font-bold text-zinc-500 mb-2">
+                        {format(new Date(trade.date_time), 'MMM d, yyyy HH:mm')}
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <p className="text-xl md:text-2xl font-bold tracking-tight uppercase">{trade.asset_pair}</p>
+                        <span className={`px-2 py-1 border-2 ${trade.direction === 'Long' ? 'border-green-600 bg-green-100 text-green-900' : 'border-red-600 bg-red-100 text-red-900'} font-bold text-xs`}>
+                          {trade.direction}
+                        </span>
+                        <p className={`text-lg md:text-xl font-bold ${pnlColor}`}>
+                          {correctedPnl >= 0 ? '+' : ''}${correctedPnl}
+                        </p>
+                      </div>
+
+                      <div>
+                        <span className="text-xs font-bold uppercase text-zinc-600 mr-2">Result</span>
+                        <span className={`px-2 py-1 border-2 ${getResultColor(trade.result)} font-bold text-xs`}>
+                          {trade.result}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={(e) => handleDelete(trade.id, e)}
+                      disabled={deletingTradeId === trade.id}
+                      className="px-3 py-2 border-2 border-black bg-red-600 text-white text-xs md:text-sm font-bold hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {deletingTradeId === trade.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Trade Detail Modal */}
         {selectedTrade && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedTrade(null)}>
-            <div className="border-4 border-black bg-white p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]" onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-3xl font-bold uppercase">Trade Details</h2>
-                <div className="flex gap-2">
+            <div className="border-4 border-black bg-white p-4 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]" onClick={(e) => e.stopPropagation()}>
+              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
+                <h2 className="text-3xl font-bold uppercase leading-none">Trade Details</h2>
+                <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:gap-2">
                   <Link
                     href={`/trades/${selectedTrade.id}/edit`}
                     onClick={(e) => e.stopPropagation()}
-                    className="px-4 py-2 border-2 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                    className="px-3 md:px-4 py-2 border-2 border-black bg-orange-600 text-white font-bold text-center hover:bg-orange-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                   >
                     Edit
                   </Link>
@@ -389,13 +371,13 @@ export default function TradeLog() {
                       handleDelete(selectedTrade.id, e)
                     }}
                     disabled={deletingTradeId === selectedTrade.id}
-                    className="px-4 py-2 border-2 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 md:px-4 py-2 border-2 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deletingTradeId === selectedTrade.id ? 'Deleting...' : 'Delete Trade'}
                   </button>
                   <button
                     onClick={() => setSelectedTrade(null)}
-                    className="px-4 py-2 border-2 border-black bg-zinc-600 text-white font-bold hover:bg-zinc-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                    className="px-3 md:px-4 py-2 border-2 border-black bg-zinc-600 text-white font-bold hover:bg-zinc-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                   >
                     ×
                   </button>
@@ -406,7 +388,7 @@ export default function TradeLog() {
                 {/* Trade Identification */}
                 <div>
                   <h3 className="text-lg font-bold uppercase mb-4">Trade Identification</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-bold text-zinc-600 uppercase">Start Date/Time</p>
                       <p className="text-lg font-semibold">{format(new Date(selectedTrade.date_time), 'MMMM d, yyyy HH:mm')}</p>
@@ -429,7 +411,7 @@ export default function TradeLog() {
                 {/* Execution Details */}
                 <div>
                   <h3 className="text-lg font-bold uppercase mb-4">Execution Details</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-bold text-zinc-600 uppercase">Direction</p>
                       <p className="text-lg font-semibold">{selectedTrade.direction}</p>
@@ -448,7 +430,7 @@ export default function TradeLog() {
                 {/* Outcome */}
                 <div>
                   <h3 className="text-lg font-bold uppercase mb-4">Outcome</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-bold text-zinc-600 uppercase">P&L</p>
                       <p className={`text-lg font-semibold ${(() => {
@@ -472,6 +454,27 @@ export default function TradeLog() {
                     </div>
                   </div>
                 </div>
+
+                {selectedTrade.screenshot_url && (
+                  <div>
+                    <h3 className="text-lg font-bold uppercase mb-4">Screenshot Reference</h3>
+                    <a
+                      href={selectedTrade.screenshot_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block border-2 border-black bg-zinc-100 px-3 py-1 text-xs font-bold uppercase hover:bg-zinc-200 mb-3"
+                    >
+                      Open Full Image
+                    </a>
+                    <div className="border-2 border-black bg-zinc-50 p-2">
+                      <img
+                        src={selectedTrade.screenshot_url}
+                        alt="Trade screenshot"
+                        className="max-h-96 w-full object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

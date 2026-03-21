@@ -15,9 +15,11 @@ A full-stack Next.js application for logging trades, tracking performance, and a
 - **Trade Log**: View, search, filter, and sort all your trade entries
 - **Analytics Dashboard**: Comprehensive performance metrics and visualizations including:
   - Win rate, expectancy, profit factor
+   - Win rate by currency pair (per-pair tracking)
   - R-Multiple distribution charts
   - Equity curve visualization
   - Win rate by strategy and setup tags
+- **Trade Screenshot Storage**: Optional chart screenshot upload stored in Supabase Storage for later reference
 - **User Authentication**: Secure sign-up and login system powered by Supabase Auth
 - **Brutalist Design**: Modern, bold UI with Tailwind CSS
 
@@ -49,6 +51,7 @@ A full-stack Next.js application for logging trades, tracking performance, and a
    - Sign up at [supabase.com](https://supabase.com)
    - Create a new project
    - Go to SQL Editor and run the SQL from `supabase/schema.sql`
+   - Run `supabase/create_screenshot_bucket.sql` to create the screenshot storage bucket + policies
    - Copy your project URL and anon key from Settings → API
 
 4. **Set up environment variables:**
@@ -57,6 +60,7 @@ A full-stack Next.js application for logging trades, tracking performance, and a
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   NEXT_PUBLIC_SUPABASE_SCREENSHOT_BUCKET=trade-screenshots
    SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
    ```
 
@@ -125,6 +129,7 @@ The database uses Supabase (PostgreSQL) with Row Level Security (RLS) enabled.
 
 - `users` - User profiles (linked to Supabase Auth)
 - `backtest_entries` - Trade entries with core required fields and optional extended fields (table name kept for backward compatibility)
+- `storage.buckets (trade-screenshots)` - Bucket for optional trade screenshots
 
 ### Core Required Fields
 - `date_time` - When the trade was executed
