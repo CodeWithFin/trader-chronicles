@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import Navbar from '@/components/Navbar'
 import Image from 'next/image'
 
-export default function TradeLog({ initialTrades = [] }) {
+export default function TradeLog({ initialTrades = [], session = null }) {
   const [trades, setTrades] = useState(initialTrades)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

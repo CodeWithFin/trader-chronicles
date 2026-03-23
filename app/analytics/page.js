@@ -23,6 +23,7 @@ export default async function AnalyticsPage() {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
   
   let initialData = null
   if (user) {
@@ -35,5 +36,5 @@ export default async function AnalyticsPage() {
     initialData = calculateAnalytics(trades || [])
   }
 
-  return <AnalyticsClient initialData={initialData} />
+  return <AnalyticsClient initialData={initialData} session={session} />
 }

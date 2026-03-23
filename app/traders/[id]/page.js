@@ -1,73 +1,55 @@
-'use client';
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import TraderProfileClient from '@/components/TraderProfileClient'
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import Navbar from '@/components/Navbar';
-import { formatDistanceToNow } from 'date-fns';
+export const dynamic = 'force-dynamic'
 
-export default function TraderProfilePage() {
-  const { id } = useParams();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+export default async function TraderProfilePage({ params }) {
+  const { id } = params
+  const cookieStore = await cookies()
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  useEffect(() => {
-    if (!id) return;
-    const fetchProfile = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await fetch(`/api/traders/${id}`);
-        if (!res.ok) {
-          const err = await res.json().catch(() => null);
-          throw new Error(err?.error || 'Failed to load profile');
-        }
-        setProfile(await res.json());
-      } catch (e) {
-        setError(e.message || 'Could not load profile');
-      } finally {
-        setLoading(false);
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      cookies: {
+        get(name) {
+          return cookieStore.get(name)?.value
+        },
+      },
+    }
+  )
+
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  // Fetch trader profile data directly on the server
+  let profile = null
+  try {
+    const { data: rawProfile } = await supabase.rpc('get_public_trader_stats', { 
+      // Note: If the RPC supports filtering by ID, use it. 
+      // If not, we fetch all and filter here (less efficient but works if RPC is simple)
+    })
+    
+    // For now, let's assume we fetch from the API logic or a direct query if possible
+    // The API uses: supabase.rpc('get_public_trader_stats')
+    // Let's find the specific trader
+    profile = (rawProfile || []).find(t => t.id === id)
+    
+    if (profile) {
+      profile = {
+        id: profile.id,
+        username: profile.username,
+        totalTrades: profile.total_trades,
+        winRate: profile.win_rate,
+        bestAssetPair: profile.best_asset_pair,
+        joinedAt: profile.joined_at,
       }
-    };
-    fetchProfile();
-  }, [id]);
+    }
+  } catch (e) {
+    console.error('Error fetching profile:', e)
+  }
 
-  return (
-    <div className="min-h-screen bg-white text-black">
-      <Navbar />
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        {loading ? (
-          <div className="text-center py-16">Loading...</div>
-        ) : error ? (
-          <div className="text-center py-16 text-red-600">{error}</div>
-        ) : profile ? (
-          <>
-            <div className="mb-8 border-b-2 border-zinc-200 pb-6">
-              <h1 className="text-4xl font-bold mb-2">{profile.username}</h1>
-              <p className="text-zinc-600 text-sm mb-2">
-                Joined {formatDistanceToNow(new Date(profile.joinedAt), { addSuffix: true })}
-              </p>
-              <div className="flex gap-6 mt-4">
-                <div>
-                  <div className="text-zinc-500 text-xs uppercase mb-1">Total Trades</div>
-                  <div className="text-2xl font-bold text-[#ea580c]">{profile.totalTrades}</div>
-                </div>
-                <div>
-                  <div className="text-zinc-500 text-xs uppercase mb-1">Win Rate</div>
-                  <div className="text-2xl font-bold">{profile.winRate}%</div>
-                </div>
-                {profile.bestAssetPair && (
-                  <div>
-                    <div className="text-zinc-500 text-xs uppercase mb-1">Best Asset Pair</div>
-                    <div className="text-lg font-semibold">{profile.bestAssetPair}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-            {/* Future: Add trade history, charts, messaging, etc. */}
-          </>
-        ) : null}
-      </div>
-    </div>
-  );
+  return <TraderProfileClient profile={profile} session={session} />
 }

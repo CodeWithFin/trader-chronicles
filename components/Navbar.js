@@ -6,15 +6,18 @@ import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 
-export default function Navbar() {
+export default function Navbar({ initialSession = null }) {
   const router = useRouter()
-  const [session, setSession] = useState(null)
+  const [session, setSession] = useState(initialSession)
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+    // Only fetch if initialSession wasn't provided (fallback)
+    if (!initialSession) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session)
+      })
+    }
 
     const {
       data: { subscription },

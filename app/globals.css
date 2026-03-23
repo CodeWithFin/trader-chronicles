@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   background-color: #ffffff;
   background-image:
     linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),

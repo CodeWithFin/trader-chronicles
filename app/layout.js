@@ -1,4 +1,11 @@
 import './globals.css'
+import { JetBrains_Mono } from 'next/font/google'
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jetbrains-mono',
+})
 
 export const metadata = {
   title: 'Trader Chronicles - Trade Journal',
@@ -10,11 +17,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <head>
-        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body>{children}</body>
+    <html lang="en" className={jetbrainsMono.variable}>
+      <body className="font-mono">{children}</body>
     </html>
   )
 }

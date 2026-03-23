@@ -22,6 +22,7 @@ export default async function TradesPage() {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
   
   let initialTrades = []
   if (user) {
@@ -35,6 +36,6 @@ export default async function TradesPage() {
     initialTrades = data || []
   }
 
-  return <TradeLogClient initialTrades={initialTrades} />
+  return <TradeLogClient initialTrades={initialTrades} session={session} />
 }
 

@@ -22,7 +22,7 @@ const ContributionGraph = dynamic(() => import('@/components/ContributionGraph')
 
 const COLORS = ['#ea580c', '#f97316', '#fb923c', '#fdba74', '#fecaca', '#fef3c7', '#dbeafe', '#e0e7ff']
 
-export default function Analytics({ initialData = null }) {
+export default function AnalyticsClient({ initialData = null, session = null }) {
   const [analytics, setAnalytics] = useState(initialData)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

@@ -2,12 +2,33 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  const cookieStore = await cookies()
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      cookies: {
+        get(name) {
+          return cookieStore.get(name)?.value
+        },
+      },
+    }
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+
   return (
     <>
-      <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-16 md:py-24">
+      <Navbar initialSession={session} />
+      <div className="max-w-7xl mx-auto px-4 py-8 md:py-16">
         <section className="w-full relative mb-20">
           <div className="w-full border-4 border-black p-6 md:p-16 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden bg-white">
 
