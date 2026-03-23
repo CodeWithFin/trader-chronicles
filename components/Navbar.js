@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 export default function Navbar() {
   const router = useRouter()
@@ -39,7 +40,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 group cursor-pointer" onClick={closeMobileMenu}>
           <div className="bg-black text-white p-1">
-            <img src="/tagged.png" alt="Logo" width={24} height={24} className="block" />
+            <Image src="/tagged.png" alt="Logo" width={24} height={24} className="block" />
           </div>
           <span className="text-xl font-bold tracking-tight">Trader Chronicles</span>
         </Link>
