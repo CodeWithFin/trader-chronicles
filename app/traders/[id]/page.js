@@ -27,14 +27,9 @@ export default async function TraderProfilePage({ params }) {
   // Fetch trader profile data directly on the server
   let profile = null
   try {
-    const { data: rawProfile } = await supabase.rpc('get_public_trader_stats', { 
-      // Note: If the RPC supports filtering by ID, use it. 
-      // If not, we fetch all and filter here (less efficient but works if RPC is simple)
-    })
+    const { data: rawProfile } = await supabase.rpc('get_public_trader_stats')
     
-    // For now, let's assume we fetch from the API logic or a direct query if possible
-    // The API uses: supabase.rpc('get_public_trader_stats')
-    // Let's find the specific trader
+    // Find the specific trader
     profile = (rawProfile || []).find(t => t.id === id)
     
     if (profile) {
