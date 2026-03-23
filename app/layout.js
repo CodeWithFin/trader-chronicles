@@ -3,6 +3,9 @@ import './globals.css'
 export const metadata = {
   title: 'Trader Chronicles - Trade Journal',
   description: 'Log your trades, track performance, and analyze your trading activity',
+  icons: {
+    icon: '/tagged.png',
+  },
 }
 
 export default function RootLayout({ children }) {
