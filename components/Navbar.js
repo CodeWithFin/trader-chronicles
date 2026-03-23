@@ -42,8 +42,8 @@ export default function Navbar({ initialSession = null }) {
     <nav className="w-full border-b-2 border-black bg-white sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 group cursor-pointer" onClick={closeMobileMenu}>
-          <div className="bg-black text-white p-1">
-            <Image src="/tagged.png" alt="Logo" width={24} height={24} className="block" />
+          <div className="p-0.5 border-2 border-black rounded-sm bg-zinc-50 overflow-hidden shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center">
+            <Image src="/tagged.png" alt="Logo" width={28} height={28} className="block object-contain" />
           </div>
           <span className="text-xl font-bold tracking-tight">Trader Chronicles</span>
         </Link>

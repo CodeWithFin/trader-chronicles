@@ -10,8 +10,10 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata = {
   title: 'Trader Chronicles - Trade Journal',
   description: 'Log your trades, track performance, and analyze your trading activity',
+  manifest: '/manifest.json',
   icons: {
     icon: '/tagged.png',
+    apple: '/tagged.png',
   },
 }
 
