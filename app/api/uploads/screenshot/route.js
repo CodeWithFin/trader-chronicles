@@ -5,7 +5,7 @@ import { getSessionUser } from '@/lib/auth'
 import { getImageKitClient } from '@/lib/imagekit-client'
 
 const MAX_BYTES = 5 * 1024 * 1024
-const ALLOWED_TYPES = /^image\/(png|jpeg|jpg|webp)$/i
+const ALLOWED_TYPES = /^image\/(png|jpeg|jpg|jfif|pjpeg|webp)$/i
 
 function sanitizeBaseName(name) {
   const base = String(name || 'screenshot')
@@ -29,9 +29,11 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing file field "file"' }, { status: 400 })
     }
 
-    const mime = entry.type || ''
-    if (!ALLOWED_TYPES.test(mime)) {
-      return NextResponse.json({ error: 'Screenshot must be PNG, JPG, or WEBP' }, { status: 400 })
+    const name = String(entry.name || '')
+    const mime = (entry.type || '').toLowerCase()
+    const hasImageExt = /\.(png|jpe?g|jfif|webp)$/i.test(name)
+    if (!ALLOWED_TYPES.test(mime) && !hasImageExt) {
+      return NextResponse.json({ error: 'Screenshot must be PNG, JPG, WEBP, or JFIF' }, { status: 400 })
     }
 
     const size = typeof entry.size === 'number' ? entry.size : 0
@@ -41,8 +43,12 @@ export async function POST(request) {
 
     const buf = Buffer.from(await entry.arrayBuffer())
 
-    const ext =
-      mime.includes('webp') ? 'webp' : mime.includes('png') ? 'png' : 'jpg'
+    const m = mime
+    const ext = m.includes('webp') || name.toLowerCase().endsWith('.webp')
+      ? 'webp'
+      : m.includes('png') || name.toLowerCase().endsWith('.png')
+        ? 'png'
+        : 'jpg'
     const base = sanitizeBaseName(entry.name?.replace(/\.[^.]+$/, '') || '')
     const fileName = `${Date.now()}-${base}.${ext}`
     const folder = `/trade-screenshots/${user.id}`
