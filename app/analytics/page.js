@@ -1,38 +1,23 @@
-import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import AnalyticsClient from '@/components/AnalyticsClient'
 import { calculateAnalytics } from '@/lib/analytics'
+import { getSessionUser } from '@/lib/auth'
+import { getSql } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AnalyticsPage() {
   const cookieStore = await cookies()
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const user = await getSessionUser(cookieStore)
+  const session = user ? { user } : null
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        get(name) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: { session } } = await supabase.auth.getSession()
-  
   let initialData = null
   if (user) {
-    const { data: trades } = await supabase
-      .from('backtest_entries')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('date_time', { ascending: true })
-    
+    const sql = getSql()
+    const trades = await sql.query(
+      `SELECT * FROM backtest_entries WHERE user_id = $1 ORDER BY date_time ASC`,
+      [user.id]
+    )
     initialData = calculateAnalytics(trades || [])
   }
 

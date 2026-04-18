@@ -3,9 +3,14 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['bpypzqlqeiexzvmhedqu.supabase.co'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ik.imagekit.io',
+        pathname: '/**',
+      },
+    ],
   },
 }
 
 module.exports = nextConfig
-

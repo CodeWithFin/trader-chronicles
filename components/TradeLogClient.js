@@ -471,6 +471,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                         alt="Trade screenshot"
                         width={600}
                         height={400}
+                        unoptimized={selectedTrade.screenshot_url?.startsWith?.('data:')}
                         className="max-h-96 w-full object-contain"
                       />
                     </div>

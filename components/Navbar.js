@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 
@@ -12,24 +11,22 @@ export default function Navbar({ initialSession = null }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    // Only fetch if initialSession wasn't provided (fallback)
-    if (!initialSession) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session)
-      })
+    if (initialSession) {
+      setSession(initialSession)
+      return
     }
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+    fetch('/api/auth/session', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => {
+        setSession(data.user ? { user: data.user } : null)
+      })
+      .catch(() => setSession(null))
+  }, [initialSession])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    setSession(null)
     setMenuOpen(false)
     router.push('/login')
   }
@@ -130,7 +127,6 @@ export default function Navbar({ initialSession = null }) {
         </div>
       </div>
 
-      {/* Mobile drawer from right */}
       {menuOpen && (
         <div className="md:hidden fixed inset-0 z-50" aria-hidden={!menuOpen}>
           <button
@@ -220,4 +216,3 @@ export default function Navbar({ initialSession = null }) {
     </nav>
   )
 }
-

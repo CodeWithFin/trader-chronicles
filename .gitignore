@@ -7,7 +7,7 @@ dist/
 build/
 .next/
 *.log
-uploads/
+/uploads/
 
 # Old React Router files (not used with Next.js)
 src/pages/

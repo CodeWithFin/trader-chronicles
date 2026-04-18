@@ -7,7 +7,6 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import DatePicker from 'react-datepicker'
-import { supabase } from '@/lib/supabase'
 import 'react-datepicker/dist/react-datepicker.css'
 
 export default function EditTradeForm() {
@@ -60,9 +59,9 @@ export default function EditTradeForm() {
   useEffect(() => {
     const checkAuthAndFetch = async () => {
       try {
-        // Check auth first
-        const { data: { session }, error: authError } = await supabase.auth.getSession()
-        if (authError || !session) {
+        const authRes = await fetch('/api/auth/session', { credentials: 'include' })
+        const authData = await authRes.json()
+        if (!authData.user) {
           router.push('/login')
           return
         }

@@ -7,12 +7,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import DatePicker from 'react-datepicker'
-import { supabase } from '@/lib/supabase'
 import 'react-datepicker/dist/react-datepicker.css'
 
 export default function TradeForm() {
   const router = useRouter()
-  const screenshotBucket = process.env.NEXT_PUBLIC_SUPABASE_SCREENSHOT_BUCKET || 'trade-screenshots'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
@@ -47,22 +45,15 @@ export default function TradeForm() {
     pnlAbsolute: ''
   })
 
-  // Check authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) {
-          console.error('Auth check error:', error)
+        const res = await fetch('/api/auth/session', { credentials: 'include' })
+        const data = await res.json()
+        if (!data.user) {
           router.push('/login')
           return
         }
-        if (!session) {
-          console.log('No session found, redirecting to login')
-          router.push('/login')
-          return
-        }
-        console.log('User authenticated:', session.user.email)
         setCheckingAuth(false)
       } catch (err) {
         console.error('Auth check failed:', err)
@@ -145,7 +136,7 @@ export default function TradeForm() {
     setScreenshotFile(selectedFile)
   }
 
-  const uploadScreenshot = async (userId) => {
+  const uploadScreenshot = async () => {
     if (!screenshotFile) {
       return ''
     }
@@ -158,31 +149,24 @@ export default function TradeForm() {
       throw new Error('Screenshot must be 5MB or smaller')
     }
 
-    const fileExt = screenshotFile.name.split('.').pop()?.toLowerCase() || 'png'
-    const safeName = screenshotFile.name
-      .replace(/\.[^.]+$/, '')
-      .replace(/[^a-zA-Z0-9-_]/g, '_')
-      .slice(0, 60)
-    const filePath = `${userId}/${Date.now()}-${safeName}.${fileExt}`
-
     setUploadingScreenshot(true)
-    const { error: uploadError } = await supabase.storage
-      .from(screenshotBucket)
-      .upload(filePath, screenshotFile, {
-        cacheControl: '3600',
-        upsert: false
+    try {
+      const body = new FormData()
+      body.append('file', screenshotFile)
+
+      const res = await fetch('/api/uploads/screenshot', {
+        method: 'POST',
+        credentials: 'include',
+        body,
       })
-
-    if (uploadError) {
-      throw new Error(uploadError.message || 'Failed to upload screenshot')
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload screenshot')
+      }
+      return data.url || ''
+    } finally {
+      setUploadingScreenshot(false)
     }
-
-    const { data: publicUrlData } = supabase.storage
-      .from(screenshotBucket)
-      .getPublicUrl(filePath)
-
-    setUploadingScreenshot(false)
-    return publicUrlData?.publicUrl || ''
   }
 
   const handleSubmit = async (e) => {
@@ -191,8 +175,9 @@ export default function TradeForm() {
     setLoading(true)
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError || !user) {
+      const authRes = await fetch('/api/auth/session', { credentials: 'include' })
+      const authData = await authRes.json()
+      if (!authData.user) {
         throw new Error('You must be logged in to add a trade')
       }
 
@@ -213,7 +198,7 @@ export default function TradeForm() {
       // Combine date and time
       const dateTime = combineDateTime(formData.startDate, formData.startTime)
       const endDateTime = combineDateTime(formData.endDate, formData.endTime)
-      const screenshotUrl = await uploadScreenshot(user.id)
+      const screenshotUrl = await uploadScreenshot()
 
       const payload = {
         dateTime: dateTime.toISOString(),

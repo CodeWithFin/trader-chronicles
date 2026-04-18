@@ -1,7 +1,7 @@
 {
   "name": "trader-chronicles",
   "version": "1.0.0",
-  "description": "Trade Journal Application - Log, track, and analyze your trades with Next.js + Supabase",
+  "description": "Trade Journal Application - Log, track, and analyze your trades with Next.js + Neon",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,10 +10,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.1.0",
-    "@supabase/supabase-js": "^2.39.0",
+    "@imagekit/nodejs": "^7.5.0",
+    "@neondatabase/serverless": "^1.1.0",
     "axios": "^1.6.2",
+    "bcryptjs": "^3.0.3",
     "date-fns": "^3.0.6",
+    "jose": "^6.2.2",
     "next": "^14.0.4",
     "react": "^18.2.0",
     "react-datepicker": "^4.24.0",
