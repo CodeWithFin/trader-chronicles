@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server'
 import { getSql } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 import { ensureTradingAccountForUser, normalizeStartingBalance } from '@/lib/trading-accounts'
+import {
+  isTradingAccountsSchemaMissingError,
+  TRADING_ACCOUNTS_MIGRATION_HELP,
+} from '@/lib/trades-schema-fallback'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +30,13 @@ export async function GET() {
 
     return NextResponse.json({ accounts: rows || [] })
   } catch (error) {
+    if (isTradingAccountsSchemaMissingError(error)) {
+      return NextResponse.json({
+        accounts: [],
+        migrationRequired: true,
+        migrationMessage: TRADING_ACCOUNTS_MIGRATION_HELP,
+      })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -62,6 +73,9 @@ export async function POST(request) {
 
     return NextResponse.json(row, { status: 201 })
   } catch (error) {
+    if (isTradingAccountsSchemaMissingError(error)) {
+      return NextResponse.json({ error: TRADING_ACCOUNTS_MIGRATION_HELP }, { status: 503 })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

@@ -12,6 +12,7 @@ const KINDS = [
 
 export default function TradingAccountsClient({ session = null }) {
   const [accounts, setAccounts] = useState([])
+  const [migrationNotice, setMigrationNotice] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [creating, setCreating] = useState(false)
@@ -27,6 +28,7 @@ export default function TradingAccountsClient({ session = null }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load')
       setAccounts(data.accounts || [])
+      setMigrationNotice(data.migrationRequired ? data.migrationMessage || '' : '')
       setError('')
     } catch (e) {
       setError(e.message || 'Failed to load trading accounts')
@@ -100,6 +102,13 @@ export default function TradingAccountsClient({ session = null }) {
           Each trade is tagged to one account so analytics and P&amp;L stay separate (eval, funded, live, etc.).
         </p>
 
+        {migrationNotice && (
+          <div className="mb-6 border-4 border-black bg-amber-50 p-4 text-sm text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <p className="font-bold uppercase mb-2">Database migration needed</p>
+            <p className="leading-relaxed">{migrationNotice}</p>
+          </div>
+        )}
+
         {error && (
           <div className="mb-6 p-4 border-2 border-black bg-red-50 text-red-900 text-sm">{error}</div>
         )}
@@ -107,7 +116,9 @@ export default function TradingAccountsClient({ session = null }) {
         <div className="border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-8">
           <h2 className="text-lg font-bold uppercase mb-4">Your accounts</h2>
           {accounts.length === 0 ? (
-            <p className="text-zinc-600 text-sm">No accounts yet.</p>
+            <p className="text-zinc-600 text-sm">
+              {migrationNotice ? 'Run the migration above, then reload — your accounts will appear here.' : 'No accounts yet.'}
+            </p>
           ) : (
             <ul className="space-y-3">
               {accounts.map((a) => (
@@ -138,8 +149,11 @@ export default function TradingAccountsClient({ session = null }) {
           )}
         </div>
 
-        <div className="border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <div className={`border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${migrationNotice ? 'opacity-60 pointer-events-none' : ''}`}>
           <h2 className="text-lg font-bold uppercase mb-4">Add account</h2>
+          {migrationNotice && (
+            <p className="mb-4 text-xs font-bold uppercase text-zinc-500">Unavailable until the database migration is applied.</p>
+          )}
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase mb-1">Label</label>
@@ -178,7 +192,7 @@ export default function TradingAccountsClient({ session = null }) {
             </div>
             <button
               type="submit"
-              disabled={creating || !form.label.trim()}
+              disabled={creating || !form.label.trim() || !!migrationNotice}
               className="px-6 py-3 border-4 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
             >
               {creating ? 'Adding…' : 'Add account'}
