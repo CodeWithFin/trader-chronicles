@@ -18,3 +18,19 @@ body {
   }
 }
 
+/* Trade journal: DatePicker ships an inline-block wrapper; block + full width lets grid/flex shrink correctly */
+.react-datepicker-wrapper {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Native time controls often keep a large intrinsic min-width; constrain for narrow viewports */
+input[type='time'] {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+

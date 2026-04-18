@@ -335,7 +335,7 @@ export default function TradeForm() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold mb-2 uppercase">Start Date & Time</label>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2">
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2 [&>*]:min-w-0">
                       <div className="min-w-0">
                         <DatePicker
                           selected={formData.startDate}
@@ -344,18 +344,20 @@ export default function TradeForm() {
                           className="w-full min-w-0 max-w-full px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
                         />
                       </div>
-                      <input
-                        type="time"
-                        value={formData.startTime}
-                        onChange={handleStartTimeChange}
-                        className="w-full min-w-0 px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
-                      />
+                      <div className="min-w-0">
+                        <input
+                          type="time"
+                          value={formData.startTime}
+                          onChange={handleStartTimeChange}
+                          className="w-full max-w-full min-w-0 px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-bold mb-2 uppercase">End Date & Time</label>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2">
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2 [&>*]:min-w-0">
                       <div className="min-w-0">
                         <DatePicker
                           selected={formData.endDate}
@@ -364,12 +366,14 @@ export default function TradeForm() {
                           className="w-full min-w-0 max-w-full px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
                         />
                       </div>
-                      <input
-                        type="time"
-                        value={formData.endTime}
-                        onChange={handleEndTimeChange}
-                        className="w-full min-w-0 px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
-                      />
+                      <div className="min-w-0">
+                        <input
+                          type="time"
+                          value={formData.endTime}
+                          onChange={handleEndTimeChange}
+                          className="w-full max-w-full min-w-0 px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
