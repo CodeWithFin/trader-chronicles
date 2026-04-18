@@ -12,9 +12,22 @@ CREATE TABLE IF NOT EXISTS public.users (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS public.trading_accounts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'other' CHECK (kind IN ('eval', 'funded', 'live', 'other')),
+  starting_balance NUMERIC(20, 8) NOT NULL DEFAULT 10000 CHECK (starting_balance >= 0),
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_trading_accounts_user_id ON public.trading_accounts(user_id);
+
 CREATE TABLE IF NOT EXISTS public.backtest_entries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  account_id UUID NOT NULL REFERENCES public.trading_accounts(id) ON DELETE RESTRICT,
   date_time TIMESTAMPTZ NOT NULL,
   end_date TIMESTAMPTZ,
   asset_pair TEXT NOT NULL,
@@ -35,6 +48,8 @@ CREATE TABLE IF NOT EXISTS public.backtest_entries (
 );
 
 CREATE INDEX IF NOT EXISTS idx_backtest_entries_user_id ON public.backtest_entries(user_id);
+CREATE INDEX IF NOT EXISTS idx_backtest_entries_account_id ON public.backtest_entries(account_id);
+CREATE INDEX IF NOT EXISTS idx_backtest_entries_user_account ON public.backtest_entries(user_id, account_id);
 CREATE INDEX IF NOT EXISTS idx_backtest_entries_date_time ON public.backtest_entries(date_time DESC);
 CREATE INDEX IF NOT EXISTS idx_backtest_entries_end_date ON public.backtest_entries(end_date DESC);
 CREATE INDEX IF NOT EXISTS idx_backtest_entries_asset_pair ON public.backtest_entries(asset_pair);
