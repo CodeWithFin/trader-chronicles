@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server'
 import { getSql } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 import { getTradingAccountForUser, normalizeStartingBalance } from '@/lib/trading-accounts'
+import {
+  isTradingAccountsSchemaMissingError,
+  TRADING_ACCOUNTS_MIGRATION_HELP,
+} from '@/lib/trades-schema-fallback'
 
 export async function PATCH(request, { params }) {
   try {
@@ -68,6 +72,9 @@ export async function PATCH(request, { params }) {
     const rows = await sql.query(query, values)
     return NextResponse.json(rows?.[0] || existing)
   } catch (error) {
+    if (isTradingAccountsSchemaMissingError(error)) {
+      return NextResponse.json({ error: TRADING_ACCOUNTS_MIGRATION_HELP }, { status: 503 })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -109,6 +116,9 @@ export async function DELETE(request, { params }) {
     await sql.query(`DELETE FROM trading_accounts WHERE id = $1 AND user_id = $2`, [params.id, user.id])
     return NextResponse.json({ ok: true })
   } catch (error) {
+    if (isTradingAccountsSchemaMissingError(error)) {
+      return NextResponse.json({ error: TRADING_ACCOUNTS_MIGRATION_HELP }, { status: 503 })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
