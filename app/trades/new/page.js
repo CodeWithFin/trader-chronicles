@@ -281,8 +281,8 @@ export default function TradeForm() {
     return (
       <>
         <Navbar />
-        <div className="max-w-2xl mx-auto px-4 py-8 md:py-16">
-          <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+        <div className="mx-auto min-w-0 max-w-2xl px-4 py-8 md:py-16">
+          <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
             <p className="text-center">Checking authentication...</p>
           </div>
         </div>
@@ -293,9 +293,9 @@ export default function TradeForm() {
   return (
     <>
       <Navbar />
-      <div className="max-w-2xl mx-auto px-4 py-8 md:py-16">
-        <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Simple Trade Journal</h1>
+      <div className="mx-auto min-w-0 max-w-2xl px-4 py-8 md:py-16">
+        <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+          <h1 className="text-3xl font-bold tracking-tight uppercase mb-2 sm:text-4xl md:text-5xl">Simple Trade Journal</h1>
           <div className="w-full h-1 bg-black mb-8"></div>
 
           {error && (
@@ -335,36 +335,40 @@ export default function TradeForm() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold mb-2 uppercase">Start Date & Time</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <DatePicker
-                        selected={formData.startDate}
-                        onChange={handleStartDateChange}
-                        dateFormat="MMMM d, yyyy"
-                        className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
-                      />
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2">
+                      <div className="min-w-0">
+                        <DatePicker
+                          selected={formData.startDate}
+                          onChange={handleStartDateChange}
+                          dateFormat="MMM d, yyyy"
+                          className="w-full min-w-0 max-w-full px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
+                        />
+                      </div>
                       <input
                         type="time"
                         value={formData.startTime}
                         onChange={handleStartTimeChange}
-                        className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                        className="w-full min-w-0 px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
                       />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-bold mb-2 uppercase">End Date & Time</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <DatePicker
-                        selected={formData.endDate}
-                        onChange={handleEndDateChange}
-                        dateFormat="MMMM d, yyyy"
-                        className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
-                      />
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2">
+                      <div className="min-w-0">
+                        <DatePicker
+                          selected={formData.endDate}
+                          onChange={handleEndDateChange}
+                          dateFormat="MMM d, yyyy"
+                          className="w-full min-w-0 max-w-full px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
+                        />
+                      </div>
                       <input
                         type="time"
                         value={formData.endTime}
                         onChange={handleEndTimeChange}
-                        className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                        className="w-full min-w-0 px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
                       />
                     </div>
                   </div>
