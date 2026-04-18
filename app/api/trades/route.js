@@ -4,6 +4,7 @@ import { getSql } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 import { roundPnl } from '@/lib/pnl-money'
 import { ensureTradingAccountForUser, getTradingAccountForUser } from '@/lib/trading-accounts'
+import { isTradingAccountsSchemaMissingError } from '@/lib/trades-schema-fallback'
 
 const SORT_COLUMNS = new Set(['date_time', 'asset_pair', 'result', 'pnl_absolute', 'created_at'])
 
@@ -66,16 +67,42 @@ export async function GET(request) {
     }
 
     const whereClause = conditions.join(' AND ')
-    const countQuery = `SELECT COUNT(*)::int AS c FROM backtest_entries b WHERE ${whereClause}`
-    const countRows = await sql.query(countQuery, params)
-    const total = countRows?.[0]?.c ?? 0
-
     const sortColumn = sortBy.includes('.') ? sortBy : `b.${sortBy}`
+    const countQuery = `SELECT COUNT(*)::int AS c FROM backtest_entries b WHERE ${whereClause}`
     const dataQuery = `SELECT b.*, a.label AS account_label FROM backtest_entries b
       LEFT JOIN trading_accounts a ON a.id = b.account_id
       WHERE ${whereClause} ORDER BY ${sortColumn} ${sortOrder} OFFSET $${n} LIMIT $${n + 1}`
     const dataParams = [...params, offset, limit]
-    const trades = await sql.query(dataQuery, dataParams)
+
+    let countRows
+    let trades
+    try {
+      countRows = await sql.query(countQuery, params)
+      trades = await sql.query(dataQuery, dataParams)
+    } catch (e) {
+      if (!isTradingAccountsSchemaMissingError(e)) throw e
+      if (accountIdFilter) {
+        return NextResponse.json(
+          {
+            error:
+              'Account filters need the trading_accounts migration. In Neon SQL Editor, run neon/migrations/001_trading_accounts.sql from this repo.',
+          },
+          { status: 503 }
+        )
+      }
+      const legacyWhere = whereClause.replace(/\bb\./g, '')
+      const legacySort = sortColumn.replace(/^b\./, '')
+      countRows = await sql.query(
+        `SELECT COUNT(*)::int AS c FROM backtest_entries WHERE ${legacyWhere}`,
+        params
+      )
+      trades = await sql.query(
+        `SELECT *, NULL::text AS account_label FROM backtest_entries WHERE ${legacyWhere} ORDER BY ${legacySort} ${sortOrder} OFFSET $${n} LIMIT $${n + 1}`,
+        dataParams
+      )
+    }
+
+    const total = countRows?.[0]?.c ?? 0
 
     return NextResponse.json({
       trades: trades || [],

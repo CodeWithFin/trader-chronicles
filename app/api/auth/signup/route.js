@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { getSql } from '@/lib/db'
 import { SESSION_COOKIE, sessionCookieOptions, signSessionToken } from '@/lib/auth'
 import { responseFromPgError } from '@/lib/pg-errors'
+import { isTradingAccountsSchemaMissingError } from '@/lib/trades-schema-fallback'
 
 export async function POST(request) {
   try {
@@ -30,10 +31,17 @@ export async function POST(request) {
       RETURNING id, email, username
     `
 
-    await sql`
-      INSERT INTO trading_accounts (user_id, label, kind, starting_balance, sort_order)
-      VALUES (${created.id}, ${'Primary'}, ${'other'}, ${10000}, ${0})
-    `
+    try {
+      await sql`
+        INSERT INTO trading_accounts (user_id, label, kind, starting_balance, sort_order)
+        VALUES (${created.id}, ${'Primary'}, ${'other'}, ${10000}, ${0})
+      `
+    } catch (e) {
+      if (!isTradingAccountsSchemaMissingError(e)) throw e
+      console.warn(
+        'signup: trading_accounts not migrated; user created without default trading account. Run neon/migrations/001_trading_accounts.sql'
+      )
+    }
 
     const token = await signSessionToken({
       id: String(created.id),
