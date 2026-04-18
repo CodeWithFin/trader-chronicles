@@ -2,28 +2,13 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
-import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { getSessionUser } from '@/lib/auth'
 
 export default async function Dashboard() {
   const cookieStore = await cookies()
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        get(name) {
-          return cookieStore.get(name)?.value
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: { session } } = await supabase.auth.getSession()
+  const user = await getSessionUser(cookieStore)
+  const session = user ? { user } : null
 
   return (
     <>
@@ -134,4 +119,3 @@ export default async function Dashboard() {
     </>
   )
 }
-

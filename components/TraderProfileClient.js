@@ -44,7 +44,7 @@ export default function TraderProfileClient({ profile, session = null }) {
         {/* Future content could go here */}
         <div className="p-8 border-4 border-black bg-zinc-50 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
            <p className="text-zinc-500 font-bold uppercase text-xs mb-2">Public Feed</p>
-           <p className="text-zinc-400 italic">No public trade logs shared by this trader yet.</p>
+           <p className="text-zinc-400 italic">No public trade logs shared yet.</p>
         </div>
       </div>
     </div>

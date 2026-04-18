@@ -2,36 +2,40 @@
 
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { format } from 'date-fns'
 import Navbar from '@/components/Navbar'
 
 // Dynamically import charts to reduce initial bundle size
 const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
-const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false })
-const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false })
 const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false })
 const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false })
 const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false })
 const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false })
 const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false })
 const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false })
-const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false })
-const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false })
 
 const ContributionGraph = dynamic(() => import('@/components/ContributionGraph'), { ssr: false })
-
-const COLORS = ['#ea580c', '#f97316', '#fb923c', '#fdba74', '#fecaca', '#fef3c7', '#dbeafe', '#e0e7ff']
+const TradingCalendar = dynamic(() => import('@/components/TradingCalendar'), { ssr: false })
+const FinancialPerformanceChart = dynamic(() => import('@/components/FinancialPerformanceChart'), { ssr: false })
 
 export default function AnalyticsClient({ initialData = null, session = null }) {
   const [analytics, setAnalytics] = useState(initialData)
-  const [loading, setLoading] = useState(true)
+  const [accounts, setAccounts] = useState([])
+  const [accountFilter, setAccountFilter] = useState('')
+  const [loading, setLoading] = useState(!(initialData != null))
   const [error, setError] = useState('')
   const [graphMode, setGraphMode] = useState('activity') // 'activity' | 'pnl'
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
-    fetchAnalytics()
+    fetch('/api/trading-accounts', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setAccounts(Array.isArray(d.accounts) ? d.accounts : []))
+      .catch(() => setAccounts([]))
   }, [])
+
+  useEffect(() => {
+    fetchAnalytics(!(initialData != null && accountFilter === ''))
+  }, [accountFilter])
 
   const fetchAnalytics = async (showLoading = true) => {
     try {
@@ -40,12 +44,11 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
       } else {
         setIsRefreshing(true)
       }
-      const response = await fetch('/api/analytics')
+      const qs = accountFilter ? `?accountId=${encodeURIComponent(accountFilter)}` : ''
+      const response = await fetch(`/api/analytics${qs}`, { credentials: 'include' })
       if (!response.ok) throw new Error('Failed to fetch analytics')
-      
+
       const data = await response.json()
-      console.log('Analytics data received:', data)
-      console.log('Daily contribution:', data.dailyContribution)
       setAnalytics(data)
       setError('')
     } catch (err) {
@@ -57,10 +60,14 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
     }
   }
 
-  // Refresh analytics in the background without blocking UI
   const refreshAnalytics = () => {
     fetchAnalytics(false)
   }
+
+  const selectedAccountLabel =
+    accountFilter && accounts.length
+      ? accounts.find((a) => a.id === accountFilter)?.label || ''
+      : ''
 
   // Show cached data while refreshing in background
   const displayAnalytics = analytics
@@ -103,37 +110,12 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
   const {
     totalTrades,
     winRate,
-    averageRMultiple,
-    averageWinR,
-    averageLossR,
-    largestWin,
-    largestLoss,
     expectancy,
     profitFactor,
-    rMultipleDistribution,
-    equityCurve,
-    winRateByAssetPair,
-    winRateByStrategy,
     winRateByTag,
-    dailyContribution = []
+    dailyContribution = [],
+    financialPerformance = { startingBalance: 10000, points: [] },
   } = displayAnalytics
-
-  const equityData = equityCurve.map((point, index) => ({
-    date: format(new Date(point.date), 'MMM d'),
-    cumulativeR: parseFloat((point.cumulativePnl || point.cumulativeR || 0).toFixed(2)),
-    cumulativePnl: parseFloat((point.cumulativePnl || point.cumulativeR || 0).toFixed(2)),
-    index
-  }))
-
-  const strategyData = Object.entries(winRateByStrategy).map(([strategy, rate]) => ({
-    name: strategy,
-    winRate: parseFloat((rate || 0).toFixed(2))
-  }))
-
-  const assetPairData = Object.entries(winRateByAssetPair || {}).map(([assetPair, rate]) => ({
-    name: assetPair,
-    winRate: parseFloat((rate || 0).toFixed(2))
-  }))
 
   const tagData = Object.entries(winRateByTag).map(([tag, rate]) => ({
     name: tag,
@@ -184,6 +166,25 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
           </div>
         )}
 
+        <div className="mb-8 flex flex-col gap-2 border-4 border-black bg-white p-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] md:flex-row md:items-center md:justify-between">
+          <label htmlFor="analytics-account" className="text-sm font-bold uppercase">
+            Analytics scope
+          </label>
+          <select
+            id="analytics-account"
+            value={accountFilter}
+            onChange={(e) => setAccountFilter(e.target.value)}
+            className="w-full max-w-md border-2 border-black bg-white px-3 py-2 text-sm font-semibold md:w-auto"
+          >
+            <option value="">All trading accounts (combined)</option>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <MetricCard
@@ -232,6 +233,23 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
           />
         </div>
 
+        <FinancialPerformanceChart
+          startingBalance={financialPerformance.startingBalance}
+          points={financialPerformance.points}
+          scopeLabel={selectedAccountLabel}
+        />
+
+        <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] mb-12">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold uppercase">Trading Calendar</h2>
+            <p className="text-sm text-zinc-600 mt-1">
+              Trades and net P&amp;L per day — green/red bar by result
+              {selectedAccountLabel ? ` · ${selectedAccountLabel}` : ''}
+            </p>
+          </div>
+          <TradingCalendar dailyContribution={dailyContribution} />
+        </div>
+
         {/* Charts */}
         <div className="space-y-12">
           {/* Contribution Graph */}
@@ -276,158 +294,6 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
               showLegend={true}
             />
           </div>
-
-          {/* Equity Curve */}
-          <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="text-2xl font-bold mb-6 uppercase">Equity Curve</h2>
-            <p className="text-sm text-zinc-600 mb-6">Cumulative P&L over time</p>
-            {equityData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={equityData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
-                  />
-                  <YAxis
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '2px solid #000',
-                      borderRadius: '0',
-                      fontFamily: 'JetBrains Mono'
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="cumulativeR"
-                    stroke="#ea580c"
-                    strokeWidth={3}
-                    dot={{ fill: '#ea580c', r: 4 }}
-                    name="Cumulative P&L"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-zinc-600 py-12">No data available</p>
-            )}
-          </div>
-
-          {/* R-Multiple Distribution */}
-          <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="text-2xl font-bold mb-6 uppercase">R-Multiple Distribution</h2>
-            <p className="text-sm text-zinc-600 mb-6">Frequency of different R-Multiple outcomes</p>
-            {rMultipleDistribution && rMultipleDistribution.length > 0 ? (
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={rMultipleDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="range"
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                  />
-                  <YAxis
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '2px solid #000',
-                      borderRadius: '0',
-                      fontFamily: 'JetBrains Mono'
-                    }}
-                  />
-                  <Bar dataKey="count" fill="#ea580c" stroke="#000" strokeWidth={2}>
-                    {rMultipleDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-zinc-600 py-12">No data available</p>
-            )}
-          </div>
-
-          {/* Win Rate by Strategy */}
-          {strategyData.length > 0 && (
-            <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-              <h2 className="text-2xl font-bold mb-6 uppercase">Win Rate by Strategy</h2>
-              <p className="text-sm text-zinc-600 mb-6">Performance comparison across strategies</p>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={strategyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                  />
-                  <YAxis
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
-                    domain={[0, 100]}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '2px solid #000',
-                      borderRadius: '0',
-                      fontFamily: 'JetBrains Mono'
-                    }}
-                    formatter={(value) => `${value}%`}
-                  />
-                  <Bar dataKey="winRate" fill="#ea580c" stroke="#000" strokeWidth={2} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* Win Rate by Currency Pair */}
-          {assetPairData.length > 0 && (
-            <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-              <h2 className="text-2xl font-bold mb-6 uppercase">Win Rate by Currency Pair</h2>
-              <p className="text-sm text-zinc-600 mb-6">Each asset pair is tracked with its own win rate</p>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={assetPairData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                  />
-                  <YAxis
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
-                    domain={[0, 100]}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '2px solid #000',
-                      borderRadius: '0',
-                      fontFamily: 'JetBrains Mono'
-                    }}
-                    formatter={(value) => `${value}%`}
-                  />
-                  <Bar dataKey="winRate" fill="#16a34a" stroke="#000" strokeWidth={2} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
 
           {/* Win Rate by Tag */}
           {tagData.length > 0 && (

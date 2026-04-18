@@ -1,91 +1,90 @@
-import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getSql } from '@/lib/db'
+import { getSessionUser } from '@/lib/auth'
+import { roundPnl } from '@/lib/pnl-money'
+import { ensureTradingAccountForUser, getTradingAccountForUser } from '@/lib/trading-accounts'
+
+const SORT_COLUMNS = new Set(['date_time', 'asset_pair', 'result', 'pnl_absolute', 'created_at'])
 
 export async function GET(request) {
   try {
     const cookieStore = await cookies()
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const user = await getSessionUser(cookieStore)
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json({ error: 'Missing Supabase configuration' }, { status: 500 })
-    }
-
-    const response = new NextResponse()
-
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get(name) {
-            return cookieStore.get(name)?.value
-          },
-          set(name, value, options) {
-            cookieStore.set(name, value, options)
-            response.cookies.set(name, value, options)
-          },
-          remove(name, options) {
-            cookieStore.set(name, '', { ...options, maxAge: 0 })
-            response.cookies.set(name, '', { ...options, maxAge: 0 })
-          },
-        },
-      }
-    )
-
-    // Try getUser first (reads from JWT in cookies)
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
-    if (userError || !user) {
-      console.error('Get user error:', userError)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     const assetPair = searchParams.get('assetPair')
     const strategyUsed = searchParams.get('strategyUsed')
-    const result = searchParams.get('result')
+    const resultFilter = searchParams.get('result')
     const setupTag = searchParams.get('setupTag')
-    const sortBy = searchParams.get('sortBy') || 'date_time'
-    const sortOrder = searchParams.get('sortOrder') || 'desc'
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const accountIdFilter = searchParams.get('accountId')
+    const sortByRaw = searchParams.get('sortBy') || 'date_time'
+    const sortOrder = searchParams.get('sortOrder') === 'asc' ? 'ASC' : 'DESC'
+    const sortBy = SORT_COLUMNS.has(sortByRaw) ? sortByRaw : 'date_time'
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)))
+    const offset = (page - 1) * limit
 
-    let query = supabase
-      .from('backtest_entries')
-      .select('*', { count: 'exact' })
-      .eq('user_id', user.id)
-      .order(sortBy, { ascending: sortOrder === 'asc' })
-      .range((page - 1) * limit, page * limit - 1)
+    const sql = getSql()
+    const conditions = ['b.user_id = $1']
+    const params = [user.id]
+    let n = 2
+
+    if (accountIdFilter) {
+      const acct = await getTradingAccountForUser(sql, accountIdFilter, user.id)
+      if (!acct) {
+        return NextResponse.json({ error: 'Trading account not found' }, { status: 404 })
+      }
+      conditions.push(`b.account_id = $${n}`)
+      params.push(accountIdFilter)
+      n += 1
+    }
 
     if (assetPair) {
-      query = query.ilike('asset_pair', `%${assetPair}%`)
+      conditions.push(`b.asset_pair ILIKE $${n}`)
+      params.push(`%${assetPair}%`)
+      n += 1
     }
     if (strategyUsed) {
-      query = query.ilike('strategy_used', `%${strategyUsed}%`)
+      conditions.push(`b.strategy_used ILIKE $${n}`)
+      params.push(`%${strategyUsed}%`)
+      n += 1
     }
-    if (result) {
-      query = query.eq('result', result)
+    if (resultFilter) {
+      conditions.push(`b.result = $${n}`)
+      params.push(resultFilter)
+      n += 1
     }
     if (setupTag) {
-      query = query.contains('setup_tags', [setupTag])
+      conditions.push(`$${n} = ANY(b.setup_tags)`)
+      params.push(setupTag)
+      n += 1
     }
 
-    const { data: trades, error, count } = await query
+    const whereClause = conditions.join(' AND ')
+    const countQuery = `SELECT COUNT(*)::int AS c FROM backtest_entries b WHERE ${whereClause}`
+    const countRows = await sql.query(countQuery, params)
+    const total = countRows?.[0]?.c ?? 0
 
-    if (error) throw error
+    const sortColumn = sortBy.includes('.') ? sortBy : `b.${sortBy}`
+    const dataQuery = `SELECT b.*, a.label AS account_label FROM backtest_entries b
+      LEFT JOIN trading_accounts a ON a.id = b.account_id
+      WHERE ${whereClause} ORDER BY ${sortColumn} ${sortOrder} OFFSET $${n} LIMIT $${n + 1}`
+    const dataParams = [...params, offset, limit]
+    const trades = await sql.query(dataQuery, dataParams)
 
     return NextResponse.json({
       trades: trades || [],
       pagination: {
         page,
         limit,
-        total: count || 0,
-        pages: Math.ceil((count || 0) / limit)
-      }
-    }, {
-      headers: response.headers
+        total,
+        pages: Math.ceil(total / limit),
+      },
     })
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -95,73 +94,14 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const cookieStore = await cookies()
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const user = await getSessionUser(cookieStore)
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json({ error: 'Missing Supabase configuration' }, { status: 500 })
-    }
-
-    // Create a response object for cookie handling
-    const response = new NextResponse()
-
-    // Helper to get cookie value from multiple sources
-    const getCookie = (name) => {
-      // Try cookieStore first
-      const cookieValue = cookieStore.get(name)?.value
-      if (cookieValue) return cookieValue
-      
-      // Fallback to reading from request headers
-      const cookieHeader = request.headers.get('cookie')
-      if (cookieHeader) {
-        const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
-          const [key, value] = cookie.trim().split('=')
-          acc[key] = value
-          return acc
-        }, {})
-        return cookies[name]
-      }
-      return undefined
-    }
-
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get(name) {
-            return getCookie(name)
-          },
-          set(name, value, options) {
-            cookieStore.set(name, value, options)
-            response.cookies.set(name, value, options)
-          },
-          remove(name, options) {
-            cookieStore.set(name, '', { ...options, maxAge: 0 })
-            response.cookies.set(name, '', { ...options, maxAge: 0 })
-          },
-        },
-      }
-    )
-
-    // Try getUser first (reads from JWT in cookies)
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
-    if (userError || !user) {
-      console.error('Get user error:', userError)
-      const allCookies = cookieStore.getAll()
-      const cookieHeader = request.headers.get('cookie')
-      console.error('Available cookies from store:', allCookies.map(c => c.name))
-      console.error('Cookie header:', cookieHeader?.substring(0, 200))
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized. Please log in to continue.' }, { status: 401 })
     }
-    
-    console.log('User authenticated:', user.email)
 
     const body = await request.json()
-    console.log('Received payload:', body)
 
-    // Validate required fields
     if (!body.dateTime) {
       return NextResponse.json({ error: 'Date/Time is required' }, { status: 400 })
     }
@@ -180,7 +120,13 @@ export async function POST(request) {
     if (!body.result || !['Win', 'Loss'].includes(body.result)) {
       return NextResponse.json({ error: 'Result must be Win or Loss' }, { status: 400 })
     }
-    if (body.pnlAbsolute === undefined || body.pnlAbsolute === null || isNaN(parseFloat(body.pnlAbsolute))) {
+    const pnlParsed = roundPnl(body.pnlAbsolute)
+    if (
+      body.pnlAbsolute === undefined ||
+      body.pnlAbsolute === null ||
+      body.pnlAbsolute === '' ||
+      !Number.isFinite(pnlParsed)
+    ) {
       return NextResponse.json({ error: 'Valid P&L amount is required' }, { status: 400 })
     }
 
@@ -199,61 +145,68 @@ export async function POST(request) {
       strategyUsed = '',
       setupTags = [],
       notes = '',
-      screenshotUrl = ''
+      screenshotUrl = '',
     } = body
 
-    // Auto-correct P&L sign based on Win/Loss result
-    let correctedPnl = parseFloat(pnlAbsolute)
+    let correctedPnl = roundPnl(pnlAbsolute)
     if (result === 'Loss' && correctedPnl > 0) {
-      // If Loss but P&L is positive, make it negative
-      correctedPnl = -Math.abs(correctedPnl)
-      console.log(`Auto-corrected P&L from ${pnlAbsolute} to ${correctedPnl} for Loss`)
+      correctedPnl = roundPnl(-Math.abs(correctedPnl))
     } else if (result === 'Win' && correctedPnl < 0) {
-      // If Win but P&L is negative, make it positive
-      correctedPnl = Math.abs(correctedPnl)
-      console.log(`Auto-corrected P&L from ${pnlAbsolute} to ${correctedPnl} for Win`)
+      correctedPnl = roundPnl(Math.abs(correctedPnl))
     }
 
-    const insertData = {
-      user_id: user.id,
-      date_time: dateTime,
-      end_date: endDate || dateTime, // Use endDate if provided, otherwise use dateTime
-      asset_pair: assetPair.trim(),
-      direction,
-      entry_price: parseFloat(entryPrice),
-      exit_price: parseFloat(exitPrice),
-      stop_loss_price: parseFloat(stopLossPrice) || 0,
-      risk_per_trade: parseFloat(riskPerTrade) || 0,
-      result,
-      pnl_absolute: correctedPnl,
-      r_multiple: parseFloat(rMultiple) || 0,
-      strategy_used: strategyUsed || '',
-      setup_tags: Array.isArray(setupTags) ? setupTags : [],
-      notes: notes || '',
-      screenshot_url: screenshotUrl || ''
+    const tags = Array.isArray(setupTags) ? setupTags : []
+
+    const sql = getSql()
+
+    let tradingAccountId = body.accountId || body.account_id
+    if (tradingAccountId) {
+      const acct = await getTradingAccountForUser(sql, tradingAccountId, user.id)
+      if (!acct) {
+        return NextResponse.json({ error: 'Invalid trading account' }, { status: 400 })
+      }
+    } else {
+      tradingAccountId = await ensureTradingAccountForUser(sql, user.id)
     }
 
-    console.log('Inserting data:', insertData)
+    const rows = await sql.query(
+      `INSERT INTO backtest_entries (
+        user_id, account_id, date_time, end_date, asset_pair, direction,
+        entry_price, exit_price, stop_loss_price, risk_per_trade,
+        result, pnl_absolute, r_multiple, strategy_used, setup_tags, notes, screenshot_url
+      ) VALUES (
+        $1, $2, $3::timestamptz, $4::timestamptz, $5, $6,
+        $7, $8, $9, $10, $11, $12, $13, $14, $15::text[], $16, $17
+      ) RETURNING *`,
+      [
+        user.id,
+        tradingAccountId,
+        dateTime,
+        endDate || dateTime,
+        assetPair.trim(),
+        direction,
+        roundPnl(entryPrice),
+        roundPnl(exitPrice),
+        roundPnl(parseFloat(stopLossPrice) || 0),
+        roundPnl(parseFloat(riskPerTrade) || 0),
+        result,
+        correctedPnl,
+        roundPnl(parseFloat(rMultiple) || 0),
+        strategyUsed || '',
+        tags,
+        notes || '',
+        screenshotUrl || '',
+      ]
+    )
 
-    const { data, error } = await supabase
-      .from('backtest_entries')
-      .insert(insertData)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({ error: error.message || 'Database error occurred' }, { status: 500 })
+    const data = rows?.[0]
+    if (!data) {
+      return NextResponse.json({ error: 'Insert failed' }, { status: 500 })
     }
 
-    console.log('Trade created successfully:', data)
-    return NextResponse.json(data, { 
-      status: 201,
-      headers: response.headers
-    })
+    return NextResponse.json(data, { status: 201 })
   } catch (error) {
     console.error('Server error:', error)
     return NextResponse.json({ error: error.message || 'Server error occurred' }, { status: 500 })
   }
 }
-

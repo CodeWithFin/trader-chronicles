@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import Navbar from '@/components/Navbar'
 import Image from 'next/image'
+import { formatDecimalTrim, formatPnlCurrency, roundPnl } from '@/lib/pnl-money'
 
 export default function TradeLog({ initialTrades = [], session = null }) {
   const [trades, setTrades] = useState(initialTrades)
@@ -14,12 +15,21 @@ export default function TradeLog({ initialTrades = [], session = null }) {
   const [deletingTradeId, setDeletingTradeId] = useState(null)
   const [deletingAll, setDeletingAll] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [accounts, setAccounts] = useState([])
   const [filters, setFilters] = useState({
     assetPair: '',
     result: '',
+    accountId: '',
     sortBy: 'date_time',
     sortOrder: 'desc'
   })
+
+  useEffect(() => {
+    fetch('/api/trading-accounts', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setAccounts(Array.isArray(d.accounts) ? d.accounts : []))
+      .catch(() => setAccounts([]))
+  }, [])
 
   useEffect(() => {
     fetchTrades()
@@ -82,14 +92,12 @@ export default function TradeLog({ initialTrades = [], session = null }) {
     }
   }
 
-  // Helper function to correct P&L display based on result
   const getCorrectedPnl = (trade) => {
-    if (trade.result === 'Loss' && trade.pnl_absolute > 0) {
-      return -Math.abs(trade.pnl_absolute)
-    } else if (trade.result === 'Win' && trade.pnl_absolute < 0) {
-      return Math.abs(trade.pnl_absolute)
-    }
-    return trade.pnl_absolute
+    const base = roundPnl(trade.pnl_absolute ?? 0)
+    if (!Number.isFinite(base)) return 0
+    if (trade.result === 'Loss' && base > 0) return roundPnl(-Math.abs(base))
+    if (trade.result === 'Win' && base < 0) return roundPnl(Math.abs(base))
+    return base
   }
 
   const handleDelete = async (tradeId, e) => {
@@ -247,7 +255,23 @@ export default function TradeLog({ initialTrades = [], session = null }) {
         {/* Filters */}
         <div className="border-4 border-black bg-white p-6 mb-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <h2 className="text-xl font-bold mb-4 uppercase">Filters</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-bold mb-2 uppercase">Account</label>
+              <select
+                name="accountId"
+                value={filters.accountId}
+                onChange={handleFilterChange}
+                className="w-full px-4 py-2 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+              >
+                <option value="">All accounts</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-bold mb-2 uppercase">Asset/Pair</label>
               <input
@@ -295,8 +319,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
         ) : (
           <div className="space-y-4">
             {displayTrades.map((trade) => {
-              const correctedPnl = getCorrectedPnl(trade)
-              const pnlColor = correctedPnl >= 0 ? 'text-green-600' : 'text-red-600'
+              const pnlColor = getCorrectedPnl(trade) >= 0 ? 'text-green-600' : 'text-red-600'
 
               return (
                 <div
@@ -319,12 +342,17 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 mb-2">
+                        {trade.account_label && (
+                          <span className="px-2 py-1 border-2 border-black bg-zinc-100 text-black text-xs font-bold uppercase">
+                            {trade.account_label}
+                          </span>
+                        )}
                         <p className="text-xl md:text-2xl font-bold tracking-tight uppercase">{trade.asset_pair}</p>
                         <span className={`px-2 py-1 border-2 ${trade.direction === 'Long' ? 'border-green-600 bg-green-100 text-green-900' : 'border-red-600 bg-red-100 text-red-900'} font-bold text-xs`}>
                           {trade.direction}
                         </span>
                         <p className={`text-lg md:text-xl font-bold ${pnlColor}`}>
-                          {correctedPnl >= 0 ? '+' : ''}${correctedPnl}
+                          {formatPnlCurrency(getCorrectedPnl(trade))}
                         </p>
                       </div>
 
@@ -400,6 +428,12 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                           : format(new Date(selectedTrade.date_time), 'MMMM d, yyyy HH:mm')}
                       </p>
                     </div>
+                    {selectedTrade.account_label && (
+                      <div className="col-span-2">
+                        <p className="text-sm font-bold text-zinc-600 uppercase">Trading account</p>
+                        <p className="text-lg font-semibold">{selectedTrade.account_label}</p>
+                      </div>
+                    )}
                     <div className="col-span-2">
                       <p className="text-sm font-bold text-zinc-600 uppercase">Asset/Pair</p>
                       <p className="text-lg font-semibold">{selectedTrade.asset_pair}</p>
@@ -417,11 +451,11 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-zinc-600 uppercase">Entry Price</p>
-                      <p className="text-lg font-semibold">{selectedTrade.entry_price}</p>
+                      <p className="text-lg font-semibold">{formatDecimalTrim(selectedTrade.entry_price)}</p>
                     </div>
                     <div>
                       <p className="text-sm font-bold text-zinc-600 uppercase">Exit Price</p>
-                      <p className="text-lg font-semibold">{selectedTrade.exit_price}</p>
+                      <p className="text-lg font-semibold">{formatDecimalTrim(selectedTrade.exit_price)}</p>
                     </div>
                   </div>
                 </div>
@@ -432,17 +466,12 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-bold text-zinc-600 uppercase">P&L</p>
-                      <p className={`text-lg font-semibold ${(() => {
-                        const correctedPnl = getCorrectedPnl(selectedTrade)
-                        return correctedPnl >= 0 ? 'text-green-600' : 'text-red-600'
-                      })()}`}>
-                        {(() => {
-                          const correctedPnl = getCorrectedPnl(selectedTrade)
-                          return correctedPnl >= 0 ? '+' : ''
-                        })()}${(() => {
-                          const correctedPnl = getCorrectedPnl(selectedTrade)
-                          return correctedPnl
-                        })()}
+                      <p
+                        className={`text-lg font-semibold ${
+                          getCorrectedPnl(selectedTrade) >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}
+                      >
+                        {formatPnlCurrency(getCorrectedPnl(selectedTrade))}
                       </p>
                     </div>
                     <div>
@@ -471,6 +500,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                         alt="Trade screenshot"
                         width={600}
                         height={400}
+                        unoptimized={selectedTrade.screenshot_url?.startsWith?.('data:')}
                         className="max-h-96 w-full object-contain"
                       />
                     </div>

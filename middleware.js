@@ -1,85 +1,48 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
+import { jwtVerify } from 'jose'
+import { SESSION_COOKIE } from '@/lib/auth-constants'
+
+function getAuthSecretKey() {
+  const secret = process.env.AUTH_SECRET
+  if (!secret || secret.length < 16) return null
+  return new TextEncoder().encode(secret)
+}
 
 export async function middleware(request) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  let sessionPayload = null
+  const token = request.cookies.get(SESSION_COOKIE)?.value
+  const key = getAuthSecretKey()
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return response
+  if (token && key) {
+    try {
+      const { payload } = await jwtVerify(token, key)
+      sessionPayload = payload
+    } catch {
+      sessionPayload = null
+    }
   }
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        get(name) {
-          return request.cookies.get(name)?.value
-        },
-        set(name, value, options) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name, options) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
-      },
-    }
-  )
+  const hasSession = Boolean(sessionPayload?.sub)
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  // Protect routes that require authentication
-  if (!session && (request.nextUrl.pathname.startsWith('/dashboard') || 
-                   request.nextUrl.pathname.startsWith('/trades') || 
-                   request.nextUrl.pathname.startsWith('/analytics'))) {
+  if (
+    !hasSession &&
+    (request.nextUrl.pathname.startsWith('/dashboard') ||
+      request.nextUrl.pathname.startsWith('/trades') ||
+      request.nextUrl.pathname.startsWith('/analytics') ||
+      request.nextUrl.pathname.startsWith('/trading-accounts'))
+  ) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect authenticated users away from login/signup
-  if (session && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
+  if (hasSession && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  return response
+  return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (images, etc.)
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
-

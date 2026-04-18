@@ -1,50 +1,27 @@
-import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getSql } from '@/lib/db'
+import { getSessionUser } from '@/lib/auth'
 
 export async function DELETE() {
   try {
     const cookieStore = await cookies()
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json({ error: 'Missing Supabase configuration' }, { status: 500 })
-    }
-
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          get(name) {
-            return cookieStore.get(name)?.value
-          },
-        },
-      }
-    )
-
-    // Use getUser instead of getSession for API routes
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
+    const user = await getSessionUser(cookieStore)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Delete all trades for the authenticated user
-    const { data, error } = await supabase
-      .from('backtest_entries')
-      .delete()
-      .eq('user_id', user.id)
-      .select()
+    const sql = getSql()
+    const rows = await sql.query(
+      `DELETE FROM backtest_entries WHERE user_id = $1 RETURNING id`,
+      [user.id]
+    )
 
-    if (error) throw error
-
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'All trades deleted successfully',
-      deletedCount: data?.length || 0
+      deletedCount: rows?.length || 0,
     })
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
-

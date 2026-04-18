@@ -7,7 +7,6 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import DatePicker from 'react-datepicker'
-import { supabase } from '@/lib/supabase'
 import 'react-datepicker/dist/react-datepicker.css'
 
 export default function EditTradeForm() {
@@ -18,6 +17,7 @@ export default function EditTradeForm() {
   const [fetching, setFetching] = useState(true)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [accounts, setAccounts] = useState([])
   // Helper to format time as HH:mm
   const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0')
@@ -43,7 +43,8 @@ export default function EditTradeForm() {
     entryPrice: '',
     exitPrice: '',
     result: 'Win',
-    pnlAbsolute: ''
+    pnlAbsolute: '',
+    accountId: '',
   })
 
   // Helper to correct P&L for display
@@ -60,9 +61,9 @@ export default function EditTradeForm() {
   useEffect(() => {
     const checkAuthAndFetch = async () => {
       try {
-        // Check auth first
-        const { data: { session }, error: authError } = await supabase.auth.getSession()
-        if (authError || !session) {
+        const authRes = await fetch('/api/auth/session', { credentials: 'include' })
+        const authData = await authRes.json()
+        if (!authData.user) {
           router.push('/login')
           return
         }
@@ -96,8 +97,12 @@ export default function EditTradeForm() {
           entryPrice: trade.entry_price?.toString() || '',
           exitPrice: trade.exit_price?.toString() || '',
           result: trade.result || 'Win',
-          pnlAbsolute: correctedPnl.toString()
+          pnlAbsolute: correctedPnl.toString(),
+          accountId: trade.account_id || '',
         })
+        const accRes = await fetch('/api/trading-accounts', { credentials: 'include' })
+        const accData = await accRes.json()
+        setAccounts(Array.isArray(accData.accounts) ? accData.accounts : [])
         setFetching(false)
       } catch (err) {
         console.error('Error:', err)
@@ -205,7 +210,8 @@ export default function EditTradeForm() {
         entryPrice: parseFloat(formData.entryPrice),
         exitPrice: parseFloat(formData.exitPrice),
         result: formData.result,
-        pnlAbsolute: parseFloat(formData.pnlAbsolute)
+        pnlAbsolute: formData.pnlAbsolute.trim(),
+        accountId: formData.accountId,
       }
 
       console.log('Updating trade:', payload)
@@ -263,6 +269,23 @@ export default function EditTradeForm() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold mb-2 uppercase">Trading account</label>
+              <select
+                name="accountId"
+                value={formData.accountId}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+              >
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Trade Identification */}
             <div>
               <h2 className="text-xl font-bold mb-4 uppercase">Trade Identification</h2>

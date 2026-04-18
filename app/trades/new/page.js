@@ -7,17 +7,28 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import DatePicker from 'react-datepicker'
-import { supabase } from '@/lib/supabase'
 import 'react-datepicker/dist/react-datepicker.css'
 
 export default function TradeForm() {
   const router = useRouter()
-  const screenshotBucket = process.env.NEXT_PUBLIC_SUPABASE_SCREENSHOT_BUCKET || 'trade-screenshots'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [accounts, setAccounts] = useState([])
+  const [accountId, setAccountId] = useState('')
   const [screenshotFile, setScreenshotFile] = useState(null)
+  const [screenshotPreviewUrl, setScreenshotPreviewUrl] = useState(null)
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
+
+  useEffect(() => {
+    if (!screenshotFile) {
+      setScreenshotPreviewUrl(null)
+      return undefined
+    }
+    const url = URL.createObjectURL(screenshotFile)
+    setScreenshotPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [screenshotFile])
   // Helper to format time as HH:mm
   const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0')
@@ -47,22 +58,15 @@ export default function TradeForm() {
     pnlAbsolute: ''
   })
 
-  // Check authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) {
-          console.error('Auth check error:', error)
+        const res = await fetch('/api/auth/session', { credentials: 'include' })
+        const data = await res.json()
+        if (!data.user) {
           router.push('/login')
           return
         }
-        if (!session) {
-          console.log('No session found, redirecting to login')
-          router.push('/login')
-          return
-        }
-        console.log('User authenticated:', session.user.email)
         setCheckingAuth(false)
       } catch (err) {
         console.error('Auth check failed:', err)
@@ -71,6 +75,18 @@ export default function TradeForm() {
     }
     checkAuth()
   }, [router])
+
+  useEffect(() => {
+    if (checkingAuth) return
+    fetch('/api/trading-accounts', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const list = d.accounts || []
+        setAccounts(list)
+        if (list[0]?.id) setAccountId(list[0].id)
+      })
+      .catch(() => setAccounts([]))
+  }, [checkingAuth])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -145,44 +161,40 @@ export default function TradeForm() {
     setScreenshotFile(selectedFile)
   }
 
-  const uploadScreenshot = async (userId) => {
+  const uploadScreenshot = async () => {
     if (!screenshotFile) {
       return ''
     }
 
     const maxFileSize = 5 * 1024 * 1024
-    if (!screenshotFile.type.startsWith('image/')) {
+    const looksLikeImage =
+      screenshotFile.type.startsWith('image/') ||
+      /\.(png|jpe?g|jfif|webp)$/i.test(screenshotFile.name)
+    if (!looksLikeImage) {
       throw new Error('Screenshot must be an image file')
     }
     if (screenshotFile.size > maxFileSize) {
       throw new Error('Screenshot must be 5MB or smaller')
     }
 
-    const fileExt = screenshotFile.name.split('.').pop()?.toLowerCase() || 'png'
-    const safeName = screenshotFile.name
-      .replace(/\.[^.]+$/, '')
-      .replace(/[^a-zA-Z0-9-_]/g, '_')
-      .slice(0, 60)
-    const filePath = `${userId}/${Date.now()}-${safeName}.${fileExt}`
-
     setUploadingScreenshot(true)
-    const { error: uploadError } = await supabase.storage
-      .from(screenshotBucket)
-      .upload(filePath, screenshotFile, {
-        cacheControl: '3600',
-        upsert: false
+    try {
+      const body = new FormData()
+      body.append('file', screenshotFile)
+
+      const res = await fetch('/api/uploads/screenshot', {
+        method: 'POST',
+        credentials: 'include',
+        body,
       })
-
-    if (uploadError) {
-      throw new Error(uploadError.message || 'Failed to upload screenshot')
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload screenshot')
+      }
+      return data.url || ''
+    } finally {
+      setUploadingScreenshot(false)
     }
-
-    const { data: publicUrlData } = supabase.storage
-      .from(screenshotBucket)
-      .getPublicUrl(filePath)
-
-    setUploadingScreenshot(false)
-    return publicUrlData?.publicUrl || ''
   }
 
   const handleSubmit = async (e) => {
@@ -191,8 +203,9 @@ export default function TradeForm() {
     setLoading(true)
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError || !user) {
+      const authRes = await fetch('/api/auth/session', { credentials: 'include' })
+      const authData = await authRes.json()
+      if (!authData.user) {
         throw new Error('You must be logged in to add a trade')
       }
 
@@ -213,17 +226,18 @@ export default function TradeForm() {
       // Combine date and time
       const dateTime = combineDateTime(formData.startDate, formData.startTime)
       const endDateTime = combineDateTime(formData.endDate, formData.endTime)
-      const screenshotUrl = await uploadScreenshot(user.id)
+      const screenshotUrl = await uploadScreenshot()
 
       const payload = {
         dateTime: dateTime.toISOString(),
         endDate: endDateTime.toISOString(),
+        ...(accountId ? { accountId } : {}),
         assetPair: formData.assetPair.trim(),
         direction: formData.direction,
         entryPrice: parseFloat(formData.entryPrice),
         exitPrice: parseFloat(formData.exitPrice),
         result: formData.result,
-        pnlAbsolute: parseFloat(formData.pnlAbsolute),
+        pnlAbsolute: formData.pnlAbsolute.trim(),
         // Set defaults for required fields that aren't in the simplified form
         stopLossPrice: 0,
         riskPerTrade: 0,
@@ -291,6 +305,29 @@ export default function TradeForm() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold mb-2 uppercase">Trading account</label>
+              <select
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                required
+                className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+              >
+                {accounts.length === 0 ? (
+                  <option value="">Loading accounts…</option>
+                ) : (
+                  accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.label}
+                    </option>
+                  ))
+                )}
+              </select>
+              <p className="text-xs text-zinc-600 mt-1">
+                Manage accounts under <span className="font-bold">Accounts</span> in the menu.
+              </p>
+            </div>
+
             {/* Trade Identification */}
             <div>
               <h2 className="text-xl font-bold mb-4 uppercase">Trade Identification</h2>
@@ -446,13 +483,26 @@ export default function TradeForm() {
                 <label className="block text-sm font-bold mb-2 uppercase">Attach Chart Screenshot</label>
                 <input
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/jfif,.jfif"
                   onChange={handleScreenshotChange}
                   className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
                 />
-                <p className="text-xs text-gray-600 mt-1">PNG, JPG, or WEBP. Max 5MB.</p>
+                <p className="text-xs text-gray-600 mt-1">PNG, JPG, WEBP, or JFIF. Max 5MB.</p>
                 {screenshotFile && (
-                  <p className="text-xs text-gray-700 mt-2">Selected: {screenshotFile.name}</p>
+                  <>
+                    <p className="text-xs text-gray-700 mt-2">Selected: {screenshotFile.name}</p>
+                    {screenshotPreviewUrl && (
+                      <div className="mt-4 border-2 border-black bg-zinc-50 p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <p className="text-xs font-bold uppercase mb-2 text-black">Preview</p>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- blob URLs are client-only */}
+                        <img
+                          src={screenshotPreviewUrl}
+                          alt="Screenshot preview"
+                          className="max-h-72 w-full object-contain bg-white border border-black"
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
