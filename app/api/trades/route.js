@@ -2,6 +2,8 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { getSql } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
+import { roundPnl } from '@/lib/pnl-money'
+import { ensureTradingAccountForUser, getTradingAccountForUser } from '@/lib/trading-accounts'
 
 const SORT_COLUMNS = new Set(['date_time', 'asset_pair', 'result', 'pnl_absolute', 'created_at'])
 
@@ -19,6 +21,7 @@ export async function GET(request) {
     const strategyUsed = searchParams.get('strategyUsed')
     const resultFilter = searchParams.get('result')
     const setupTag = searchParams.get('setupTag')
+    const accountIdFilter = searchParams.get('accountId')
     const sortByRaw = searchParams.get('sortBy') || 'date_time'
     const sortOrder = searchParams.get('sortOrder') === 'asc' ? 'ASC' : 'DESC'
     const sortBy = SORT_COLUMNS.has(sortByRaw) ? sortByRaw : 'date_time'
@@ -27,37 +30,50 @@ export async function GET(request) {
     const offset = (page - 1) * limit
 
     const sql = getSql()
-    const conditions = ['user_id = $1']
+    const conditions = ['b.user_id = $1']
     const params = [user.id]
     let n = 2
 
+    if (accountIdFilter) {
+      const acct = await getTradingAccountForUser(sql, accountIdFilter, user.id)
+      if (!acct) {
+        return NextResponse.json({ error: 'Trading account not found' }, { status: 404 })
+      }
+      conditions.push(`b.account_id = $${n}`)
+      params.push(accountIdFilter)
+      n += 1
+    }
+
     if (assetPair) {
-      conditions.push(`asset_pair ILIKE $${n}`)
+      conditions.push(`b.asset_pair ILIKE $${n}`)
       params.push(`%${assetPair}%`)
       n += 1
     }
     if (strategyUsed) {
-      conditions.push(`strategy_used ILIKE $${n}`)
+      conditions.push(`b.strategy_used ILIKE $${n}`)
       params.push(`%${strategyUsed}%`)
       n += 1
     }
     if (resultFilter) {
-      conditions.push(`result = $${n}`)
+      conditions.push(`b.result = $${n}`)
       params.push(resultFilter)
       n += 1
     }
     if (setupTag) {
-      conditions.push(`$${n} = ANY(setup_tags)`)
+      conditions.push(`$${n} = ANY(b.setup_tags)`)
       params.push(setupTag)
       n += 1
     }
 
     const whereClause = conditions.join(' AND ')
-    const countQuery = `SELECT COUNT(*)::int AS c FROM backtest_entries WHERE ${whereClause}`
+    const countQuery = `SELECT COUNT(*)::int AS c FROM backtest_entries b WHERE ${whereClause}`
     const countRows = await sql.query(countQuery, params)
     const total = countRows?.[0]?.c ?? 0
 
-    const dataQuery = `SELECT * FROM backtest_entries WHERE ${whereClause} ORDER BY ${sortBy} ${sortOrder} OFFSET $${n} LIMIT $${n + 1}`
+    const sortColumn = sortBy.includes('.') ? sortBy : `b.${sortBy}`
+    const dataQuery = `SELECT b.*, a.label AS account_label FROM backtest_entries b
+      LEFT JOIN trading_accounts a ON a.id = b.account_id
+      WHERE ${whereClause} ORDER BY ${sortColumn} ${sortOrder} OFFSET $${n} LIMIT $${n + 1}`
     const dataParams = [...params, offset, limit]
     const trades = await sql.query(dataQuery, dataParams)
 
@@ -104,7 +120,13 @@ export async function POST(request) {
     if (!body.result || !['Win', 'Loss'].includes(body.result)) {
       return NextResponse.json({ error: 'Result must be Win or Loss' }, { status: 400 })
     }
-    if (body.pnlAbsolute === undefined || body.pnlAbsolute === null || isNaN(parseFloat(body.pnlAbsolute))) {
+    const pnlParsed = roundPnl(body.pnlAbsolute)
+    if (
+      body.pnlAbsolute === undefined ||
+      body.pnlAbsolute === null ||
+      body.pnlAbsolute === '' ||
+      !Number.isFinite(pnlParsed)
+    ) {
       return NextResponse.json({ error: 'Valid P&L amount is required' }, { status: 400 })
     }
 
@@ -126,38 +148,50 @@ export async function POST(request) {
       screenshotUrl = '',
     } = body
 
-    let correctedPnl = parseFloat(pnlAbsolute)
+    let correctedPnl = roundPnl(pnlAbsolute)
     if (result === 'Loss' && correctedPnl > 0) {
-      correctedPnl = -Math.abs(correctedPnl)
+      correctedPnl = roundPnl(-Math.abs(correctedPnl))
     } else if (result === 'Win' && correctedPnl < 0) {
-      correctedPnl = Math.abs(correctedPnl)
+      correctedPnl = roundPnl(Math.abs(correctedPnl))
     }
 
     const tags = Array.isArray(setupTags) ? setupTags : []
 
     const sql = getSql()
+
+    let tradingAccountId = body.accountId || body.account_id
+    if (tradingAccountId) {
+      const acct = await getTradingAccountForUser(sql, tradingAccountId, user.id)
+      if (!acct) {
+        return NextResponse.json({ error: 'Invalid trading account' }, { status: 400 })
+      }
+    } else {
+      tradingAccountId = await ensureTradingAccountForUser(sql, user.id)
+    }
+
     const rows = await sql.query(
       `INSERT INTO backtest_entries (
-        user_id, date_time, end_date, asset_pair, direction,
+        user_id, account_id, date_time, end_date, asset_pair, direction,
         entry_price, exit_price, stop_loss_price, risk_per_trade,
         result, pnl_absolute, r_multiple, strategy_used, setup_tags, notes, screenshot_url
       ) VALUES (
-        $1, $2::timestamptz, $3::timestamptz, $4, $5,
-        $6, $7, $8, $9, $10, $11, $12, $13, $14::text[], $15, $16
+        $1, $2, $3::timestamptz, $4::timestamptz, $5, $6,
+        $7, $8, $9, $10, $11, $12, $13, $14, $15::text[], $16, $17
       ) RETURNING *`,
       [
         user.id,
+        tradingAccountId,
         dateTime,
         endDate || dateTime,
         assetPair.trim(),
         direction,
-        parseFloat(entryPrice),
-        parseFloat(exitPrice),
-        parseFloat(stopLossPrice) || 0,
-        parseFloat(riskPerTrade) || 0,
+        roundPnl(entryPrice),
+        roundPnl(exitPrice),
+        roundPnl(parseFloat(stopLossPrice) || 0),
+        roundPnl(parseFloat(riskPerTrade) || 0),
         result,
         correctedPnl,
-        parseFloat(rMultiple) || 0,
+        roundPnl(parseFloat(rMultiple) || 0),
         strategyUsed || '',
         tags,
         notes || '',

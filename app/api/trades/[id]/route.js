@@ -2,6 +2,8 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { getSql } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
+import { roundPnl } from '@/lib/pnl-money'
+import { getTradingAccountForUser } from '@/lib/trading-accounts'
 
 export async function GET(request, { params }) {
   try {
@@ -13,7 +15,10 @@ export async function GET(request, { params }) {
 
     const sql = getSql()
     const rows = await sql.query(
-      `SELECT * FROM backtest_entries WHERE id = $1 AND user_id = $2`,
+      `SELECT b.*, a.label AS account_label
+       FROM backtest_entries b
+       LEFT JOIN trading_accounts a ON a.id = b.account_id
+       WHERE b.id = $1 AND b.user_id = $2`,
       [params.id, user.id]
     )
     const data = rows?.[0]
@@ -41,7 +46,7 @@ export async function PUT(request, { params }) {
     let currentResult = body.result
     if (body.pnlAbsolute !== undefined && body.result === undefined) {
       const cur = await sql.query(
-        `SELECT result FROM backtest_entries WHERE id = $1 AND user_id = $2`,
+        `SELECT result FROM backtest_entries WHERE id = $1 AND user_id = $2 LIMIT 1`,
         [params.id, user.id]
       )
       currentResult = cur?.[0]?.result
@@ -61,29 +66,40 @@ export async function PUT(request, { params }) {
     if (body.endDate !== undefined) push('end_date', body.endDate)
     if (body.assetPair !== undefined) push('asset_pair', body.assetPair)
     if (body.direction !== undefined) push('direction', body.direction)
-    if (body.entryPrice !== undefined) push('entry_price', body.entryPrice)
-    if (body.exitPrice !== undefined) push('exit_price', body.exitPrice)
-    if (body.stopLossPrice !== undefined) push('stop_loss_price', body.stopLossPrice)
-    if (body.riskPerTrade !== undefined) push('risk_per_trade', body.riskPerTrade)
+    if (body.entryPrice !== undefined) push('entry_price', roundPnl(body.entryPrice))
+    if (body.exitPrice !== undefined) push('exit_price', roundPnl(body.exitPrice))
+    if (body.stopLossPrice !== undefined) push('stop_loss_price', roundPnl(body.stopLossPrice))
+    if (body.riskPerTrade !== undefined) push('risk_per_trade', roundPnl(body.riskPerTrade))
     if (body.result !== undefined) push('result', body.result)
 
     if (body.pnlAbsolute !== undefined) {
-      let correctedPnl = parseFloat(body.pnlAbsolute)
+      let correctedPnl = roundPnl(body.pnlAbsolute)
       const resultToUse = body.result !== undefined ? body.result : currentResult
-      if (resultToUse === 'Loss' && correctedPnl > 0) correctedPnl = -Math.abs(correctedPnl)
-      else if (resultToUse === 'Win' && correctedPnl < 0) correctedPnl = Math.abs(correctedPnl)
+      if (resultToUse === 'Loss' && correctedPnl > 0) correctedPnl = roundPnl(-Math.abs(correctedPnl))
+      else if (resultToUse === 'Win' && correctedPnl < 0) correctedPnl = roundPnl(Math.abs(correctedPnl))
       push('pnl_absolute', correctedPnl)
     }
 
-    if (body.rMultiple !== undefined) push('r_multiple', body.rMultiple)
+    if (body.rMultiple !== undefined) push('r_multiple', roundPnl(body.rMultiple))
     if (body.strategyUsed !== undefined) push('strategy_used', body.strategyUsed)
     if (body.setupTags !== undefined) push('setup_tags', Array.isArray(body.setupTags) ? body.setupTags : [])
     if (body.notes !== undefined) push('notes', body.notes)
     if (body.screenshotUrl !== undefined) push('screenshot_url', body.screenshotUrl)
 
+    const accountPatch = body.accountId ?? body.account_id
+    if (accountPatch !== undefined) {
+      const acct = await getTradingAccountForUser(sql, accountPatch, user.id)
+      if (!acct) {
+        return NextResponse.json({ error: 'Invalid trading account' }, { status: 400 })
+      }
+      push('account_id', accountPatch)
+    }
+
     if (fields.length === 0) {
       const existing = await sql.query(
-        `SELECT * FROM backtest_entries WHERE id = $1 AND user_id = $2`,
+        `SELECT b.*, a.label AS account_label FROM backtest_entries b
+         LEFT JOIN trading_accounts a ON a.id = b.account_id
+         WHERE b.id = $1 AND b.user_id = $2`,
         [params.id, user.id]
       )
       if (!existing?.[0]) {
@@ -98,8 +114,15 @@ export async function PUT(request, { params }) {
       WHERE id = $${idx} AND user_id = $${idx + 1}
       RETURNING *
     `
-    const rows = await sql.query(query, values)
-    const data = rows?.[0]
+    await sql.query(query, values)
+
+    const fullRows = await sql.query(
+      `SELECT b.*, a.label AS account_label FROM backtest_entries b
+       LEFT JOIN trading_accounts a ON a.id = b.account_id
+       WHERE b.id = $1 AND b.user_id = $2`,
+      [params.id, user.id]
+    )
+    const data = fullRows?.[0]
     if (!data) {
       return NextResponse.json({ error: 'Trade not found' }, { status: 404 })
     }

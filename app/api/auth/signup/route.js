@@ -30,6 +30,11 @@ export async function POST(request) {
       RETURNING id, email, username
     `
 
+    await sql`
+      INSERT INTO trading_accounts (user_id, label, kind, starting_balance, sort_order)
+      VALUES (${created.id}, ${'Primary'}, ${'other'}, ${10000}, ${0})
+    `
+
     const token = await signSessionToken({
       id: String(created.id),
       email: created.email,

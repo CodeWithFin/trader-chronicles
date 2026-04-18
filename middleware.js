@@ -28,7 +28,8 @@ export async function middleware(request) {
     !hasSession &&
     (request.nextUrl.pathname.startsWith('/dashboard') ||
       request.nextUrl.pathname.startsWith('/trades') ||
-      request.nextUrl.pathname.startsWith('/analytics'))
+      request.nextUrl.pathname.startsWith('/analytics') ||
+      request.nextUrl.pathname.startsWith('/trading-accounts'))
   ) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
