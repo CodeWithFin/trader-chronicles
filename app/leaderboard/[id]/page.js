@@ -5,7 +5,7 @@ import { fetchPublicTraderStats } from '@/lib/public-traders'
 
 export const dynamic = 'force-dynamic'
 
-export default async function TraderProfilePage({ params }) {
+export default async function LeaderboardProfilePage({ params }) {
   const { id } = params
   const cookieStore = await cookies()
   const user = await getSessionUser(cookieStore)

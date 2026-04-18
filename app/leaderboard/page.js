@@ -1,17 +1,17 @@
 import { cookies } from 'next/headers'
-import TradersClient from '@/components/TradersClient'
+import LeaderboardClient from '@/components/LeaderboardClient'
 import { getSessionUser } from '@/lib/auth'
 import { fetchPublicTraderStats } from '@/lib/public-traders'
 
 export const dynamic = 'force-dynamic'
 
-export default async function TradersPage() {
+export default async function LeaderboardPage() {
   const cookieStore = await cookies()
   const user = await getSessionUser(cookieStore)
   const session = user ? { user } : null
 
   const rawTraders = await fetchPublicTraderStats()
-  const traders = (rawTraders || []).map((row) => ({
+  const entries = (rawTraders || []).map((row) => ({
     id: row.id,
     username: row.username,
     totalTrades: row.total_trades,
@@ -20,5 +20,5 @@ export default async function TradersPage() {
     joinedAt: row.joined_at,
   }))
 
-  return <TradersClient initialTraders={traders} session={session} />
+  return <LeaderboardClient initialEntries={entries} session={session} />
 }

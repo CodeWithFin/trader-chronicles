@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
     const data = await fetchPublicTraderStats()
     const profile = (data || []).find((row) => row.id === id)
     if (!profile) {
-      return NextResponse.json({ error: 'Trader not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
     return NextResponse.json({
       id: profile.id,
