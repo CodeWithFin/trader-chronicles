@@ -4,6 +4,7 @@ import { getSql } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
 import { roundPnl } from '@/lib/pnl-money'
 import { getTradingAccountForUser } from '@/lib/trading-accounts'
+import { isTradingAccountsSchemaMissingError } from '@/lib/trades-schema-fallback'
 
 export async function GET(request, { params }) {
   try {
@@ -14,13 +15,22 @@ export async function GET(request, { params }) {
     }
 
     const sql = getSql()
-    const rows = await sql.query(
-      `SELECT b.*, a.label AS account_label
-       FROM backtest_entries b
-       LEFT JOIN trading_accounts a ON a.id = b.account_id
-       WHERE b.id = $1 AND b.user_id = $2`,
-      [params.id, user.id]
-    )
+    let rows
+    try {
+      rows = await sql.query(
+        `SELECT b.*, a.label AS account_label
+         FROM backtest_entries b
+         LEFT JOIN trading_accounts a ON a.id = b.account_id
+         WHERE b.id = $1 AND b.user_id = $2`,
+        [params.id, user.id]
+      )
+    } catch (e) {
+      if (!isTradingAccountsSchemaMissingError(e)) throw e
+      rows = await sql.query(`SELECT * FROM backtest_entries WHERE id = $1 AND user_id = $2`, [
+        params.id,
+        user.id,
+      ])
+    }
     const data = rows?.[0]
     if (!data) {
       return NextResponse.json({ error: 'Trade not found' }, { status: 404 })
