@@ -14,8 +14,21 @@ export default function TradeForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [accounts, setAccounts] = useState([])
+  const [accountId, setAccountId] = useState('')
   const [screenshotFile, setScreenshotFile] = useState(null)
+  const [screenshotPreviewUrl, setScreenshotPreviewUrl] = useState(null)
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
+
+  useEffect(() => {
+    if (!screenshotFile) {
+      setScreenshotPreviewUrl(null)
+      return undefined
+    }
+    const url = URL.createObjectURL(screenshotFile)
+    setScreenshotPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [screenshotFile])
   // Helper to format time as HH:mm
   const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0')
@@ -62,6 +75,18 @@ export default function TradeForm() {
     }
     checkAuth()
   }, [router])
+
+  useEffect(() => {
+    if (checkingAuth) return
+    fetch('/api/trading-accounts', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const list = d.accounts || []
+        setAccounts(list)
+        if (list[0]?.id) setAccountId(list[0].id)
+      })
+      .catch(() => setAccounts([]))
+  }, [checkingAuth])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -142,7 +167,10 @@ export default function TradeForm() {
     }
 
     const maxFileSize = 5 * 1024 * 1024
-    if (!screenshotFile.type.startsWith('image/')) {
+    const looksLikeImage =
+      screenshotFile.type.startsWith('image/') ||
+      /\.(png|jpe?g|jfif|webp)$/i.test(screenshotFile.name)
+    if (!looksLikeImage) {
       throw new Error('Screenshot must be an image file')
     }
     if (screenshotFile.size > maxFileSize) {
@@ -203,12 +231,13 @@ export default function TradeForm() {
       const payload = {
         dateTime: dateTime.toISOString(),
         endDate: endDateTime.toISOString(),
+        ...(accountId ? { accountId } : {}),
         assetPair: formData.assetPair.trim(),
         direction: formData.direction,
         entryPrice: parseFloat(formData.entryPrice),
         exitPrice: parseFloat(formData.exitPrice),
         result: formData.result,
-        pnlAbsolute: parseFloat(formData.pnlAbsolute),
+        pnlAbsolute: formData.pnlAbsolute.trim(),
         // Set defaults for required fields that aren't in the simplified form
         stopLossPrice: 0,
         riskPerTrade: 0,
@@ -276,6 +305,29 @@ export default function TradeForm() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold mb-2 uppercase">Trading account</label>
+              <select
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                required
+                className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+              >
+                {accounts.length === 0 ? (
+                  <option value="">Loading accounts…</option>
+                ) : (
+                  accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.label}
+                    </option>
+                  ))
+                )}
+              </select>
+              <p className="text-xs text-zinc-600 mt-1">
+                Manage accounts under <span className="font-bold">Accounts</span> in the menu.
+              </p>
+            </div>
+
             {/* Trade Identification */}
             <div>
               <h2 className="text-xl font-bold mb-4 uppercase">Trade Identification</h2>
@@ -431,13 +483,26 @@ export default function TradeForm() {
                 <label className="block text-sm font-bold mb-2 uppercase">Attach Chart Screenshot</label>
                 <input
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/jfif,.jfif"
                   onChange={handleScreenshotChange}
                   className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
                 />
-                <p className="text-xs text-gray-600 mt-1">PNG, JPG, or WEBP. Max 5MB.</p>
+                <p className="text-xs text-gray-600 mt-1">PNG, JPG, WEBP, or JFIF. Max 5MB.</p>
                 {screenshotFile && (
-                  <p className="text-xs text-gray-700 mt-2">Selected: {screenshotFile.name}</p>
+                  <>
+                    <p className="text-xs text-gray-700 mt-2">Selected: {screenshotFile.name}</p>
+                    {screenshotPreviewUrl && (
+                      <div className="mt-4 border-2 border-black bg-zinc-50 p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <p className="text-xs font-bold uppercase mb-2 text-black">Preview</p>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- blob URLs are client-only */}
+                        <img
+                          src={screenshotPreviewUrl}
+                          alt="Screenshot preview"
+                          className="max-h-72 w-full object-contain bg-white border border-black"
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

@@ -14,7 +14,10 @@ export default async function TradesPage() {
   if (user) {
     const sql = getSql()
     initialTrades = await sql.query(
-      `SELECT * FROM backtest_entries WHERE user_id = $1 ORDER BY date_time DESC LIMIT 50`,
+      `SELECT b.*, a.label AS account_label
+       FROM backtest_entries b
+       LEFT JOIN trading_accounts a ON a.id = b.account_id
+       WHERE b.user_id = $1 ORDER BY b.date_time DESC LIMIT 50`,
       [user.id]
     )
   }
