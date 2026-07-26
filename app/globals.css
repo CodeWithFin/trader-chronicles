@@ -2,13 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+  --canvas: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #fafafa;
+  --surface-3: #f4f4f5;
+  --ink: #000000;
+  --muted: #52525b;
+  --border: #000000;
+  --shadow: #000000;
+  --grid-line: rgba(0, 0, 0, 0.05);
+  --overlay: rgba(0, 0, 0, 0.5);
+  --input-bg: #ffffff;
+  --danger-bg: #fef2f2;
+  --danger-fg: #7f1d1d;
+  --warn-bg: #fefce8;
+  --warn-fg: #713f12;
+  --info-bg: #eff6ff;
+  --info-fg: #1e3a8a;
+  --success-bg: #dcfce7;
+  --success-fg: #14532d;
+  --accent-soft: #ffedd5;
+  --accent-soft-fg: #9a3412;
+}
+
 body {
   font-family: var(--font-jetbrains-mono), monospace;
-  background-color: #ffffff;
+  background-color: var(--canvas);
+  color: var(--ink);
   background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
   background-size: 40px 40px;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 @layer utilities {
@@ -16,6 +43,33 @@ body {
     background-color: #ea580c;
     color: white;
   }
+
+  .shadow-brutal {
+    box-shadow: 2px 2px 0 0 var(--shadow);
+  }
+  .shadow-brutal-sm {
+    box-shadow: 2px 2px 0 0 var(--shadow);
+  }
+  .shadow-brutal-md {
+    box-shadow: 4px 4px 0 0 var(--shadow);
+  }
+  .shadow-brutal-lg {
+    box-shadow: 6px 6px 0 0 var(--shadow);
+  }
+  .shadow-brutal-xl {
+    box-shadow: 8px 8px 0 0 var(--shadow);
+  }
+  .shadow-brutal-2xl {
+    box-shadow: 12px 12px 0 0 var(--shadow);
+  }
+  .shadow-brutal-drawer {
+    box-shadow: -8px 0 0 0 var(--shadow);
+  }
+}
+
+/* Keep the solid-black logo legible on its chip. */
+.logo-chip {
+  background-color: #fafafa;
 }
 
 /* Trade journal: DatePicker ships an inline-block wrapper; block + full width lets grid/flex shrink correctly */
