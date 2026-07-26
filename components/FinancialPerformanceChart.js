@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { endOfDay, format, parseISO, startOfDay } from 'date-fns'
+import { useChartPalette } from '@/components/useChartPalette'
 
 function fmtMoney(v) {
   const n = Number(v)
@@ -12,6 +13,7 @@ function fmtMoney(v) {
 }
 
 export default function FinancialPerformanceChart({ startingBalance = 10000, points = [], scopeLabel = '' }) {
+  const palette = useChartPalette()
   const [rangeStart, setRangeStart] = useState('')
   const [rangeEnd, setRangeEnd] = useState('')
   const [view, setView] = useState('balance')
@@ -64,7 +66,7 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
       : { step: 'Realized P&L', smooth: 'Running net' }
 
   return (
-    <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] mb-12">
+    <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl mb-12">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h2 className="text-2xl font-bold uppercase tracking-tight text-black">Financial Performance</h2>
@@ -89,7 +91,7 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
               max={bounds.max || undefined}
               value={rangeStart}
               onChange={(e) => setRangeStart(e.target.value)}
-              className="rounded-md border-2 border-black bg-white px-3 py-2 text-sm font-medium text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:border-[#ea580c] focus:outline-none"
+              className="rounded-md border-2 border-black bg-white px-3 py-2 text-sm font-medium text-black shadow-brutal-sm focus:border-[#ea580c] focus:outline-none"
             />
             <span className="text-zinc-500">→</span>
             <label className="sr-only" htmlFor="fp-end">
@@ -102,11 +104,11 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
               max={bounds.max || undefined}
               value={rangeEnd}
               onChange={(e) => setRangeEnd(e.target.value)}
-              className="rounded-md border-2 border-black bg-white px-3 py-2 text-sm font-medium text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:border-[#ea580c] focus:outline-none"
+              className="rounded-md border-2 border-black bg-white px-3 py-2 text-sm font-medium text-black shadow-brutal-sm focus:border-[#ea580c] focus:outline-none"
             />
           </div>
 
-          <div className="flex rounded-md border-2 border-black p-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex rounded-md border-2 border-black p-0.5 shadow-brutal-sm">
             <button
               type="button"
               onClick={() => setView('balance')}
@@ -154,21 +156,21 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
 
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={palette.grid} vertical={false} />
               <XAxis
                 type="number"
                 dataKey="ts"
                 domain={['dataMin', 'dataMax']}
                 tickFormatter={(ts) => format(new Date(ts), 'MMM d')}
-                stroke="#111827"
-                tick={{ fill: '#374151', fontSize: 11 }}
-                tickLine={{ stroke: '#d1d5db' }}
+                stroke={palette.axis}
+                tick={{ fill: palette.tickMuted, fontSize: 11 }}
+                tickLine={{ stroke: palette.grid }}
               />
               <YAxis
                 tickFormatter={(v) => fmtMoney(v)}
-                stroke="#111827"
-                tick={{ fill: '#374151', fontSize: 11 }}
-                tickLine={{ stroke: '#d1d5db' }}
+                stroke={palette.axis}
+                tick={{ fill: palette.tickMuted, fontSize: 11 }}
+                tickLine={{ stroke: palette.grid }}
                 width={72}
               />
               <Tooltip
@@ -178,21 +180,22 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
                   name === 'balanceStep' ? legendNames.step : name === 'equitySmooth' ? legendNames.smooth : name,
                 ]}
                 contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '2px solid #000',
+                  backgroundColor: palette.tooltipBg,
+                  border: `2px solid ${palette.tooltipBorder}`,
                   borderRadius: 0,
                   fontFamily: 'ui-monospace, monospace',
                   fontSize: 12,
+                  color: palette.tooltipLabel,
                 }}
-                labelStyle={{ color: '#111827', fontWeight: 700, marginBottom: 4 }}
+                labelStyle={{ color: palette.tooltipLabel, fontWeight: 700, marginBottom: 4 }}
               />
               <Line
                 type="stepAfter"
                 dataKey="balanceStep"
                 name="balanceStep"
-                stroke="#111827"
+                stroke={palette.line}
                 strokeWidth={2}
-                dot={{ r: 3, fill: '#fff', stroke: '#111827', strokeWidth: 2 }}
+                dot={{ r: 3, fill: palette.dotFill, stroke: palette.line, strokeWidth: 2 }}
                 activeDot={{ r: 5 }}
                 isAnimationActive={false}
               />

@@ -39,9 +39,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-16">
+    <div className="min-h-screen flex items-center justify-center px-4 py-16 relative">
       <div className="w-full max-w-md">
-        <div className="border-4 border-black bg-white p-8 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+        <div className="border-4 border-black bg-white p-8 md:p-12 shadow-brutal-2xl">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Login</h1>
           <div className="w-full h-1 bg-black mb-8"></div>
 
@@ -83,7 +83,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 border-2 border-black bg-white text-xs font-bold uppercase hover:bg-zinc-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px]"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 border-2 border-black bg-white text-xs font-bold uppercase hover:bg-zinc-100 shadow-brutal-sm active:shadow-none active:translate-x-[1px] active:translate-y-[1px]"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   aria-pressed={showPassword}
                 >
@@ -95,7 +95,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-6 py-4 border-4 border-black bg-orange-600 text-white text-lg font-bold hover:bg-orange-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-4 border-4 border-black bg-orange-600 text-white text-lg font-bold hover:bg-orange-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>

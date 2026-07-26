@@ -246,7 +246,7 @@ export default function EditTradeForm() {
       <>
         <Navbar />
         <div className="mx-auto min-w-0 max-w-2xl px-4 py-8 md:py-16">
-          <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+          <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-brutal-2xl">
             <p className="text-center">{checkingAuth ? 'Checking authentication...' : 'Loading trade...'}</p>
           </div>
         </div>
@@ -258,7 +258,7 @@ export default function EditTradeForm() {
     <>
       <Navbar />
       <div className="mx-auto min-w-0 max-w-2xl px-4 py-8 md:py-16">
-        <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+        <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-brutal-2xl">
           <h1 className="text-3xl font-bold tracking-tight uppercase mb-2 sm:text-4xl md:text-5xl">Edit Trade</h1>
           <div className="w-full h-1 bg-black mb-8"></div>
 
@@ -446,13 +446,13 @@ export default function EditTradeForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-4 border-4 border-black bg-orange-600 text-white text-lg font-bold hover:bg-orange-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-4 border-4 border-black bg-orange-600 text-white text-lg font-bold hover:bg-orange-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Updating...' : 'Update Trade'}
               </button>
               <Link
                 href="/trades"
-                className="px-6 py-4 border-4 border-black bg-white text-lg font-bold hover:bg-zinc-100 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+                className="px-6 py-4 border-4 border-black bg-white text-lg font-bold hover:bg-zinc-100 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
               >
                 Cancel
               </Link>

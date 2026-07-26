@@ -58,12 +58,12 @@ export default function TradingCalendar({ dailyContribution = [] }) {
   return (
     <div className="w-full max-w-full">
       <div className="overflow-x-auto [-webkit-overflow-scrolling:touch] sm:overflow-visible">
-        <div className="min-w-[300px] border-4 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:min-w-0">
+        <div className="min-w-[300px] border-4 border-black bg-white shadow-brutal-xl sm:min-w-0">
           <div className="flex items-center justify-between gap-2 border-b-4 border-black bg-white px-2 py-3 sm:gap-4 sm:px-4 sm:py-4">
             <button
               type="button"
               onClick={() => setCursorMonth((d) => subMonths(d, 1))}
-              className="flex h-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center border-2 border-black bg-white text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-zinc-100 active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+              className="flex h-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center border-2 border-black bg-white text-black shadow-brutal-sm hover:bg-zinc-100 active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
               aria-label="Previous month"
             >
               <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -76,7 +76,7 @@ export default function TradingCalendar({ dailyContribution = [] }) {
             <button
               type="button"
               onClick={() => setCursorMonth((d) => addMonths(d, 1))}
-              className="flex h-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center border-2 border-black bg-white text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-zinc-100 active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+              className="flex h-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center border-2 border-black bg-white text-black shadow-brutal-sm hover:bg-zinc-100 active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
               aria-label="Next month"
             >
               <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
