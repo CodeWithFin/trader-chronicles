@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
+import { useChartPalette } from '@/components/useChartPalette'
 
 // Dynamically import charts to reduce initial bundle size
 const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false })
@@ -18,6 +19,7 @@ const TradingCalendar = dynamic(() => import('@/components/TradingCalendar'), { 
 const FinancialPerformanceChart = dynamic(() => import('@/components/FinancialPerformanceChart'), { ssr: false })
 
 export default function AnalyticsClient({ initialData = null, session = null }) {
+  const palette = useChartPalette()
   const [analytics, setAnalytics] = useState(initialData)
   const [accounts, setAccounts] = useState([])
   const [accountFilter, setAccountFilter] = useState('')
@@ -123,7 +125,7 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
   }))
 
   const MetricCard = ({ title, value, subtitle, color = 'black' }) => (
-    <div className="border-2 border-black bg-white p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+    <div className="border-2 border-black bg-white p-6 shadow-brutal-md">
       <p className="text-sm font-bold text-zinc-600 uppercase mb-2">{title}</p>
       <p className={`text-4xl font-bold ${color}`}>{value}</p>
       {subtitle && <p className="text-sm text-zinc-600 mt-2">{subtitle}</p>}
@@ -147,16 +149,39 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-16">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Analytics Dashboard</h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2 inline-flex items-center gap-3">
+              <svg className="w-10 h-10 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden>
+                <path d="M0 0h24v24H0z" fill="none" />
+                <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+                  <path d="M7 18v-2m5 2v-3m5 3v-5M2.5 12c0-4.478 0-6.718 1.391-8.109S7.521 2.5 12 2.5c4.478 0 6.718 0 8.109 1.391S21.5 7.521 21.5 12c0 4.478 0 6.718-1.391 8.109S16.479 21.5 12 21.5c-4.478 0-6.718 0-8.109-1.391S2.5 16.479 2.5 12" />
+                  <path d="M5.992 11.486c2.155.072 7.042-.253 9.822-4.665m-1.822-.533l1.876-.302c.228-.029.564.152.647.367l.495 1.638" />
+                </g>
+              </svg>
+              Analytics Dashboard
+            </h1>
             <div className="w-full h-1 bg-black"></div>
           </div>
           <button
             onClick={refreshAnalytics}
             disabled={isRefreshing}
-            className="px-4 py-2 border-2 border-black bg-white text-sm font-bold hover:bg-zinc-100 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2 border-2 border-black bg-white text-sm font-bold hover:bg-zinc-100 transition-colors shadow-brutal-sm disabled:opacity-50 disabled:cursor-not-allowed"
             title="Refresh analytics data"
           >
-            {isRefreshing ? 'Refreshing...' : '🔄 Refresh'}
+            <svg
+              className={`w-4 h-4 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`}
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 15 15"
+              aria-hidden
+            >
+              <path d="M0 0h15v15H0z" fill="none" />
+              <path
+                fill="currentColor"
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M14 7.5A6.5 6.5 0 0 0 7.5 1V0a7.5 7.5 0 0 1 5.099 13H15v1h-4v-4h1v2.19a6.48 6.48 0 0 0 2-4.69M2.4 2H0V1h4v4H3V2.81A6.5 6.5 0 0 0 7.5 14v1A7.5 7.5 0 0 1 2.4 2"
+              />
+            </svg>
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
         
@@ -166,7 +191,7 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
           </div>
         )}
 
-        <div className="mb-8 flex flex-col gap-2 border-4 border-black bg-white p-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] md:flex-row md:items-center md:justify-between">
+        <div className="mb-8 flex flex-col gap-2 border-4 border-black bg-white p-4 shadow-brutal-lg md:flex-row md:items-center md:justify-between">
           <label htmlFor="analytics-account" className="text-sm font-bold uppercase">
             Analytics scope
           </label>
@@ -239,7 +264,7 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
           scopeLabel={selectedAccountLabel}
         />
 
-        <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] mb-12">
+        <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl mb-12">
           <div className="mb-6">
             <h2 className="text-2xl font-bold uppercase">Trading Calendar</h2>
             <p className="text-sm text-zinc-600 mt-1">
@@ -253,7 +278,7 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
         {/* Charts */}
         <div className="space-y-12">
           {/* Contribution Graph */}
-          <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+          <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl">
             <div className="flex items-center justify-between mb-2">
               <div>
                 <h2 className="text-2xl font-bold uppercase">Trading Activity</h2>
@@ -297,35 +322,36 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
 
           {/* Win Rate by Tag */}
           {tagData.length > 0 && (
-            <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+            <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl">
               <h2 className="text-2xl font-bold mb-6 uppercase">Win Rate by Setup Tag</h2>
               <p className="text-sm text-zinc-600 mb-6">Performance by trade setup characteristics</p>
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={tagData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={palette.grid} />
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
+                    tick={{ fill: palette.tick, fontSize: 12, fontFamily: 'JetBrains Mono' }}
+                    stroke={palette.axis}
                     angle={-45}
                     textAnchor="end"
                     height={100}
                   />
                   <YAxis
-                    tick={{ fill: '#000', fontSize: 12, fontFamily: 'JetBrains Mono' }}
-                    stroke="#000"
+                    tick={{ fill: palette.tick, fontSize: 12, fontFamily: 'JetBrains Mono' }}
+                    stroke={palette.axis}
                     domain={[0, 100]}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '2px solid #000',
+                      backgroundColor: palette.tooltipBg,
+                      border: `2px solid ${palette.tooltipBorder}`,
                       borderRadius: '0',
-                      fontFamily: 'JetBrains Mono'
+                      fontFamily: 'JetBrains Mono',
+                      color: palette.tooltipLabel,
                     }}
                     formatter={(value) => `${value}%`}
                   />
-                  <Bar dataKey="winRate" fill="#ea580c" stroke="#000" strokeWidth={2} />
+                  <Bar dataKey="winRate" fill="#ea580c" stroke={palette.axis} strokeWidth={2} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
