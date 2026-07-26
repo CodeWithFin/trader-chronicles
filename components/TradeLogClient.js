@@ -230,13 +230,22 @@ export default function TradeLog({ initialTrades = [], session = null }) {
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-16">
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Trade Log</h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2 inline-flex items-center gap-3">
+              <svg className="w-10 h-10 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden>
+                <path d="M0 0h48v48H0z" fill="none" />
+                <g fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="4">
+                  <path d="M13 10h28v34H13z" />
+                  <path strokeLinecap="round" d="M35 10V4H8a1 1 0 0 0-1 1v33h6m8-16h12m-12 8h12" />
+                </g>
+              </svg>
+              Trade Log
+            </h1>
             <div className="w-full h-1 bg-black"></div>
           </div>
           <div className="flex gap-3">
             <Link
               href="/trades/new"
-              className="px-6 py-3 border-4 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+              className="px-6 py-3 border-4 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
             >
               + New Trade
             </Link>
@@ -244,7 +253,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
               <button
                 onClick={handleDeleteAll}
                 disabled={deletingAll}
-                className="px-6 py-3 border-4 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 border-4 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {deletingAll ? 'Deleting...' : 'Delete All Trades'}
               </button>
@@ -253,7 +262,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
         </div>
 
         {/* Filters */}
-        <div className="border-4 border-black bg-white p-6 mb-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <div className="border-4 border-black bg-white p-6 mb-8 shadow-brutal-xl">
           <h2 className="text-xl font-bold mb-4 uppercase">Filters</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -313,7 +322,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
 
         {/* Trade List */}
         {displayTrades.length === 0 && !loading ? (
-          <div className="border-4 border-black bg-white p-8 text-center text-zinc-600 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="border-4 border-black bg-white p-8 text-center text-zinc-600 shadow-brutal-xl">
             No trades found. <Link href="/trades/new" className="text-orange-600 font-bold hover:underline">Create your first trade entry</Link>
           </div>
         ) : (
@@ -333,7 +342,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                       setSelectedTrade(trade)
                     }
                   }}
-                  className="border-4 border-black bg-white p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[1px] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
+                  className="border-4 border-black bg-white p-5 shadow-brutal-lg hover:-translate-y-[1px] hover:shadow-brutal-xl transition-all cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
@@ -367,7 +376,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                     <button
                       onClick={(e) => handleDelete(trade.id, e)}
                       disabled={deletingTradeId === trade.id}
-                      className="px-3 py-2 border-2 border-black bg-red-600 text-white text-xs md:text-sm font-bold hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-2 border-2 border-black bg-red-600 text-white text-xs md:text-sm font-bold hover:bg-red-500 transition-colors shadow-brutal-sm active:shadow-none active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deletingTradeId === trade.id ? 'Deleting...' : 'Delete'}
                     </button>
@@ -381,14 +390,14 @@ export default function TradeLog({ initialTrades = [], session = null }) {
         {/* Trade Detail Modal */}
         {selectedTrade && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedTrade(null)}>
-            <div className="border-4 border-black bg-white p-4 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]" onClick={(e) => e.stopPropagation()}>
+            <div className="border-4 border-black bg-white p-4 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-brutal-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
                 <h2 className="text-3xl font-bold uppercase leading-none">Trade Details</h2>
                 <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:gap-2">
                   <Link
                     href={`/trades/${selectedTrade.id}/edit`}
                     onClick={(e) => e.stopPropagation()}
-                    className="px-3 md:px-4 py-2 border-2 border-black bg-orange-600 text-white font-bold text-center hover:bg-orange-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                    className="px-3 md:px-4 py-2 border-2 border-black bg-orange-600 text-white font-bold text-center hover:bg-orange-500 transition-colors shadow-brutal-sm"
                   >
                     Edit
                   </Link>
@@ -398,13 +407,13 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                       handleDelete(selectedTrade.id, e)
                     }}
                     disabled={deletingTradeId === selectedTrade.id}
-                    className="px-3 md:px-4 py-2 border-2 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 md:px-4 py-2 border-2 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-brutal-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deletingTradeId === selectedTrade.id ? 'Deleting...' : 'Delete Trade'}
                   </button>
                   <button
                     onClick={() => setSelectedTrade(null)}
-                    className="px-3 md:px-4 py-2 border-2 border-black bg-zinc-600 text-white font-bold hover:bg-zinc-500 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                    className="px-3 md:px-4 py-2 border-2 border-black bg-zinc-600 text-white font-bold hover:bg-zinc-500 transition-colors shadow-brutal-sm"
                   >
                     ×
                   </button>

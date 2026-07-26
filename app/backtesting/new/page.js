@@ -3,29 +3,38 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 
-export default function EditTradeForm() {
+export default function NewBacktestForm() {
   const router = useRouter()
-  const params = useParams()
-  const tradeId = params.id
   const [loading, setLoading] = useState(false)
-  const [fetching, setFetching] = useState(true)
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
-  const [accounts, setAccounts] = useState([])
-  // Helper to format time as HH:mm
+  const [knownStrategies, setKnownStrategies] = useState([])
+  const [screenshotFile, setScreenshotFile] = useState(null)
+  const [screenshotPreviewUrl, setScreenshotPreviewUrl] = useState(null)
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
+
+  useEffect(() => {
+    if (!screenshotFile) {
+      setScreenshotPreviewUrl(null)
+      return undefined
+    }
+    const url = URL.createObjectURL(screenshotFile)
+    setScreenshotPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [screenshotFile])
+
   const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
     return `${hours}:${minutes}`
   }
 
-  // Helper to combine date and time
   const combineDateTime = (date, time) => {
     const [hours, minutes] = time.split(':').map(Number)
     const combined = new Date(date)
@@ -33,149 +42,94 @@ export default function EditTradeForm() {
     return combined
   }
 
+  const now = new Date()
   const [formData, setFormData] = useState({
-    startDate: new Date(),
-    startTime: '00:00',
-    endDate: new Date(),
-    endTime: '00:00',
+    strategyName: '',
+    startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    startTime: formatTime(now),
+    endDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    endTime: formatTime(now),
     assetPair: '',
     direction: 'Long',
     entryPrice: '',
     exitPrice: '',
     result: 'Win',
     pnlAbsolute: '',
-    accountId: '',
   })
 
-  // Helper to correct P&L for display
-  const getCorrectedPnl = (trade) => {
-    if (trade.result === 'Loss' && trade.pnl_absolute > 0) {
-      return -Math.abs(trade.pnl_absolute)
-    } else if (trade.result === 'Win' && trade.pnl_absolute < 0) {
-      return Math.abs(trade.pnl_absolute)
-    }
-    return trade.pnl_absolute
-  }
-
-  // Check authentication and fetch trade data
   useEffect(() => {
-    const checkAuthAndFetch = async () => {
+    const checkAuth = async () => {
       try {
-        const authRes = await fetch('/api/auth/session', { credentials: 'include' })
-        const authData = await authRes.json()
-        if (!authData.user) {
+        const res = await fetch('/api/auth/session', { credentials: 'include' })
+        const data = await res.json()
+        if (!data.user) {
           router.push('/login')
           return
         }
         setCheckingAuth(false)
-
-        // Fetch trade data
-        const response = await fetch(`/api/trades/${tradeId}`, {
-          credentials: 'include'
-        })
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Trade not found')
-          }
-          throw new Error('Failed to fetch trade')
-        }
-
-        const trade = await response.json()
-        
-        // Pre-populate form with trade data (using corrected P&L)
-        const correctedPnl = getCorrectedPnl(trade)
-        const startDateTime = new Date(trade.date_time)
-        const endDateTime = trade.end_date ? new Date(trade.end_date) : new Date(trade.date_time)
-        setFormData({
-          startDate: new Date(startDateTime.getFullYear(), startDateTime.getMonth(), startDateTime.getDate()),
-          startTime: formatTime(startDateTime),
-          endDate: new Date(endDateTime.getFullYear(), endDateTime.getMonth(), endDateTime.getDate()),
-          endTime: formatTime(endDateTime),
-          assetPair: trade.asset_pair || '',
-          direction: trade.direction || 'Long',
-          entryPrice: trade.entry_price?.toString() || '',
-          exitPrice: trade.exit_price?.toString() || '',
-          result: trade.result || 'Win',
-          pnlAbsolute: correctedPnl.toString(),
-          accountId: trade.account_id || '',
-        })
-        const accRes = await fetch('/api/trading-accounts', { credentials: 'include' })
-        const accData = await accRes.json()
-        setAccounts(Array.isArray(accData.accounts) ? accData.accounts : [])
-        setFetching(false)
       } catch (err) {
-        console.error('Error:', err)
-        setError(err.message || 'Failed to load trade')
-        setFetching(false)
-        setCheckingAuth(false)
+        console.error('Auth check failed:', err)
+        router.push('/login')
       }
     }
-    checkAuthAndFetch()
-  }, [tradeId, router])
+    checkAuth()
+  }, [router])
+
+  useEffect(() => {
+    if (checkingAuth) return
+    fetch('/api/backtests?limit=1', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setKnownStrategies(Array.isArray(d.strategies) ? d.strategies : []))
+      .catch(() => setKnownStrategies([]))
+  }, [checkingAuth])
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        [name]: value
-      }
-      
-      // Auto-adjust P&L sign based on Win/Loss selection
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value }
       if (name === 'result') {
         const pnlValue = parseFloat(prev.pnlAbsolute)
         if (!isNaN(pnlValue) && pnlValue !== 0) {
-          if (value === 'Loss' && pnlValue > 0) {
-            updated.pnlAbsolute = (-Math.abs(pnlValue)).toString()
-          } else if (value === 'Win' && pnlValue < 0) {
-            updated.pnlAbsolute = Math.abs(pnlValue).toString()
-          }
+          if (value === 'Loss' && pnlValue > 0) updated.pnlAbsolute = (-Math.abs(pnlValue)).toString()
+          else if (value === 'Win' && pnlValue < 0) updated.pnlAbsolute = Math.abs(pnlValue).toString()
         }
       }
-      
-      // Auto-adjust Win/Loss based on P&L sign
       if (name === 'pnlAbsolute') {
         const pnlValue = parseFloat(value)
         if (!isNaN(pnlValue)) {
-          if (pnlValue < 0 && prev.result === 'Win') {
-            updated.result = 'Loss'
-          } else if (pnlValue > 0 && prev.result === 'Loss') {
-            updated.result = 'Win'
-          }
+          if (pnlValue < 0 && prev.result === 'Win') updated.result = 'Loss'
+          else if (pnlValue > 0 && prev.result === 'Loss') updated.result = 'Win'
         }
       }
-      
       return updated
     })
   }
 
-  const handleStartDateChange = (date) => {
-    setFormData(prev => ({
-      ...prev,
-      startDate: date
-    }))
-  }
+  const handleStartDateChange = (date) => setFormData((prev) => ({ ...prev, startDate: date }))
+  const handleStartTimeChange = (e) => setFormData((prev) => ({ ...prev, startTime: e.target.value }))
+  const handleEndDateChange = (date) => setFormData((prev) => ({ ...prev, endDate: date }))
+  const handleEndTimeChange = (e) => setFormData((prev) => ({ ...prev, endTime: e.target.value }))
+  const handleScreenshotChange = (e) => setScreenshotFile(e.target.files?.[0] || null)
 
-  const handleStartTimeChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      startTime: e.target.value
-    }))
-  }
+  const uploadScreenshot = async () => {
+    if (!screenshotFile) return ''
+    const maxFileSize = 5 * 1024 * 1024
+    const looksLikeImage =
+      screenshotFile.type.startsWith('image/') || /\.(png|jpe?g|jfif|webp)$/i.test(screenshotFile.name)
+    if (!looksLikeImage) throw new Error('Screenshot must be an image file')
+    if (screenshotFile.size > maxFileSize) throw new Error('Screenshot must be 5MB or smaller')
 
-  const handleEndDateChange = (date) => {
-    setFormData(prev => ({
-      ...prev,
-      endDate: date
-    }))
-  }
-
-  const handleEndTimeChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      endTime: e.target.value
-    }))
+    setUploadingScreenshot(true)
+    try {
+      const body = new FormData()
+      body.append('file', screenshotFile)
+      const res = await fetch('/api/uploads/screenshot', { method: 'POST', credentials: 'include', body })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to upload screenshot')
+      return data.url || ''
+    } finally {
+      setUploadingScreenshot(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -184,25 +138,18 @@ export default function EditTradeForm() {
     setLoading(true)
 
     try {
-      // Validate required fields
-      if (!formData.assetPair || !formData.assetPair.trim()) {
-        throw new Error('Asset/Symbol is required')
-      }
-      if (!formData.entryPrice || isNaN(parseFloat(formData.entryPrice))) {
-        throw new Error('Valid entry price is required')
-      }
-      if (!formData.exitPrice || isNaN(parseFloat(formData.exitPrice))) {
-        throw new Error('Valid exit price is required')
-      }
-      if (!formData.pnlAbsolute || isNaN(parseFloat(formData.pnlAbsolute))) {
-        throw new Error('Valid P&L amount is required')
-      }
+      if (!formData.strategyName || !formData.strategyName.trim()) throw new Error('Strategy name is required')
+      if (!formData.assetPair || !formData.assetPair.trim()) throw new Error('Asset/Symbol is required')
+      if (!formData.entryPrice || isNaN(parseFloat(formData.entryPrice))) throw new Error('Valid entry price is required')
+      if (!formData.exitPrice || isNaN(parseFloat(formData.exitPrice))) throw new Error('Valid exit price is required')
+      if (!formData.pnlAbsolute || isNaN(parseFloat(formData.pnlAbsolute))) throw new Error('Valid P&L amount is required')
 
-      // Combine date and time
       const dateTime = combineDateTime(formData.startDate, formData.startTime)
       const endDateTime = combineDateTime(formData.endDate, formData.endTime)
+      const screenshotUrl = await uploadScreenshot()
 
       const payload = {
+        strategyName: formData.strategyName.trim(),
         dateTime: dateTime.toISOString(),
         endDate: endDateTime.toISOString(),
         assetPair: formData.assetPair.trim(),
@@ -211,43 +158,40 @@ export default function EditTradeForm() {
         exitPrice: parseFloat(formData.exitPrice),
         result: formData.result,
         pnlAbsolute: formData.pnlAbsolute.trim(),
-        accountId: formData.accountId,
+        stopLossPrice: 0,
+        riskPerTrade: 0,
+        rMultiple: 0,
+        setupTags: [],
+        notes: '',
+        screenshotUrl,
       }
 
-      console.log('Updating trade:', payload)
-
-      const response = await fetch(`/api/trades/${tradeId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch('/api/backtests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload),
       })
-
       const responseData = await response.json()
+      if (!response.ok) throw new Error(responseData.error || `Failed to create backtest entry (${response.status})`)
 
-      if (!response.ok) {
-        console.error('API Error:', responseData)
-        throw new Error(responseData.error || `Failed to update trade (${response.status})`)
-      }
-
-      console.log('Trade updated successfully:', responseData)
-      router.push('/trades')
+      router.push('/backtesting')
     } catch (err) {
       console.error('Form submission error:', err)
-      setError(err.message || 'Failed to update trade')
+      setError(err.message || 'Failed to create backtest entry')
+    } finally {
       setLoading(false)
+      setUploadingScreenshot(false)
     }
   }
 
-  if (checkingAuth || fetching) {
+  if (checkingAuth) {
     return (
       <>
         <Navbar />
         <div className="mx-auto min-w-0 max-w-2xl px-4 py-8 md:py-16">
           <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-brutal-2xl">
-            <p className="text-center">{checkingAuth ? 'Checking authentication...' : 'Loading trade...'}</p>
+            <p className="text-center">Checking authentication...</p>
           </div>
         </div>
       </>
@@ -259,34 +203,35 @@ export default function EditTradeForm() {
       <Navbar />
       <div className="mx-auto min-w-0 max-w-2xl px-4 py-8 md:py-16">
         <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-brutal-2xl">
-          <h1 className="text-3xl font-bold tracking-tight uppercase mb-2 sm:text-4xl md:text-5xl">Edit Trade</h1>
-          <div className="w-full h-1 bg-black mb-8"></div>
+          <h1 className="text-3xl font-bold tracking-tight uppercase mb-2 sm:text-4xl md:text-5xl">New Backtest Entry</h1>
+          <div className="w-full h-1 bg-black mb-2"></div>
+          <p className="text-sm text-zinc-600 mb-8">
+            Simulated trades logged here stay separate from your live Trade Log.
+          </p>
 
-          {error && (
-            <div className="mb-6 p-4 border-2 border-black bg-red-50 text-red-900">
-              {error}
-            </div>
-          )}
+          {error && <div className="mb-6 p-4 border-2 border-black bg-red-50 text-red-900">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-bold mb-2 uppercase">Trading account</label>
-              <select
-                name="accountId"
-                value={formData.accountId}
+              <label className="block text-sm font-bold mb-2 uppercase">Strategy Name</label>
+              <input
+                type="text"
+                name="strategyName"
+                value={formData.strategyName}
                 onChange={handleChange}
                 required
+                list="known-strategies"
+                placeholder="e.g., Breakout Retest, London ORB"
                 className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
-              >
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.label}
-                  </option>
+              />
+              <datalist id="known-strategies">
+                {knownStrategies.map((s) => (
+                  <option key={s} value={s} />
                 ))}
-              </select>
+              </datalist>
+              <p className="text-xs text-zinc-600 mt-1">Group entries under a strategy to measure its win rate.</p>
             </div>
 
-            {/* Trade Identification */}
             <div>
               <h2 className="text-xl font-bold mb-4 uppercase">Trade Identification</h2>
               <div className="space-y-4">
@@ -351,7 +296,6 @@ export default function EditTradeForm() {
               </div>
             </div>
 
-            {/* Execution Details */}
             <div>
               <h2 className="text-xl font-bold mb-4 uppercase">Execution Details</h2>
               <div className="space-y-4">
@@ -384,7 +328,6 @@ export default function EditTradeForm() {
                       className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-bold mb-2 uppercase">Exit Price</label>
                     <input
@@ -403,7 +346,6 @@ export default function EditTradeForm() {
               </div>
             </div>
 
-            {/* Outcome */}
             <div>
               <h2 className="text-xl font-bold mb-4 uppercase">Outcome</h2>
               <div className="space-y-4">
@@ -420,12 +362,11 @@ export default function EditTradeForm() {
                     className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
                   />
                   <p className="text-xs text-gray-600 mt-1">
-                    {formData.result === 'Win' 
-                      ? 'Enter positive value for profit (will auto-adjust if negative)' 
+                    {formData.result === 'Win'
+                      ? 'Enter positive value for profit (will auto-adjust if negative)'
                       : 'Enter negative value for loss (will auto-adjust if positive)'}
                   </p>
                 </div>
-
                 <div>
                   <label className="block text-sm font-bold mb-2 uppercase">Win/Loss</label>
                   <select
@@ -442,16 +383,46 @@ export default function EditTradeForm() {
               </div>
             </div>
 
+            <div>
+              <h2 className="text-xl font-bold mb-4 uppercase">Screenshot (Optional)</h2>
+              <div>
+                <label className="block text-sm font-bold mb-2 uppercase">Attach Chart Screenshot</label>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/jfif,.jfif"
+                  onChange={handleScreenshotChange}
+                  className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                />
+                <p className="text-xs text-gray-600 mt-1">PNG, JPG, WEBP, or JFIF. Max 5MB.</p>
+                {screenshotFile && (
+                  <>
+                    <p className="text-xs text-gray-700 mt-2">Selected: {screenshotFile.name}</p>
+                    {screenshotPreviewUrl && (
+                      <div className="mt-4 border-2 border-black bg-zinc-50 p-3 shadow-brutal-md">
+                        <p className="text-xs font-bold uppercase mb-2 text-black">Preview</p>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- blob URLs are client-only */}
+                        <img
+                          src={screenshotPreviewUrl}
+                          alt="Screenshot preview"
+                          className="max-h-72 w-full object-contain bg-white border border-black"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || uploadingScreenshot}
                 className="flex-1 px-6 py-4 border-4 border-black bg-orange-600 text-white text-lg font-bold hover:bg-orange-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Updating...' : 'Update Trade'}
+                {uploadingScreenshot ? 'Uploading Screenshot...' : loading ? 'Saving...' : 'Save Backtest'}
               </button>
               <Link
-                href="/trades"
+                href="/backtesting"
                 className="px-6 py-4 border-4 border-black bg-white text-lg font-bold hover:bg-zinc-100 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
               >
                 Cancel
@@ -463,4 +434,3 @@ export default function EditTradeForm() {
     </>
   )
 }
-

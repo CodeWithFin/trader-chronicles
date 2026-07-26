@@ -210,7 +210,7 @@ export default function ContributionGraph({
 
   if (data.length === 0) {
     return (
-      <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+      <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl">
         <h2 className="text-2xl font-bold mb-6 uppercase">{title}</h2>
         <p className="text-center text-zinc-600 py-12">No trading data available</p>
       </div>
@@ -222,7 +222,7 @@ export default function ContributionGraph({
   const visibleGridRows = showWeekends ? grid : [grid[1], grid[2], grid[3], grid[4], grid[5]]
 
   return (
-    <div className="border-4 border-black bg-white p-6 md:p-12 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+    <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl">
       <div className="flex items-center justify-between mb-2">
         <div>
           <h2 className="text-2xl font-bold uppercase">{title}</h2>
