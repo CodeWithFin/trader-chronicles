@@ -1,12 +1,5 @@
--- Trader visibility and public stats
--- Run this in Supabase SQL Editor
+-- Rank leaderboard by total profit/loss instead of trade count.
 
--- Public profile visibility
-DROP POLICY IF EXISTS "Public can view all user profiles" ON public.users;
-CREATE POLICY "Public can view all user profiles" ON public.users
-  FOR SELECT USING (true);
-
--- Safe aggregated stats API for traders directory
 CREATE OR REPLACE FUNCTION public.get_public_trader_stats()
 RETURNS TABLE (
   id UUID,
@@ -15,7 +8,7 @@ RETURNS TABLE (
   win_rate INTEGER,
   total_pnl NUMERIC,
   best_asset_pair TEXT,
-  joined_at TIMESTAMP WITH TIME ZONE
+  joined_at TIMESTAMPTZ
 )
 LANGUAGE sql
 SECURITY DEFINER
@@ -74,5 +67,3 @@ AS $$
   LEFT JOIN best_pair bp ON bp.user_id = us.id
   ORDER BY us.total_pnl DESC, us.created_at DESC;
 $$;
-
-GRANT EXECUTE ON FUNCTION public.get_public_trader_stats() TO anon, authenticated;

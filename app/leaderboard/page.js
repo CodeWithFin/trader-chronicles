@@ -16,6 +16,7 @@ export default async function LeaderboardPage() {
     username: row.username,
     totalTrades: row.total_trades,
     winRate: row.win_rate,
+    totalPnl: row.total_pnl != null ? Number(row.total_pnl) : 0,
     bestAssetPair: row.best_asset_pair,
     joinedAt: row.joined_at,
   }))

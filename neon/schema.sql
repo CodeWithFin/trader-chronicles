@@ -93,6 +93,7 @@ RETURNS TABLE (
   username TEXT,
   total_trades INTEGER,
   win_rate INTEGER,
+  total_pnl NUMERIC,
   best_asset_pair TEXT,
   joined_at TIMESTAMPTZ
 )
@@ -126,7 +127,14 @@ AS $$
       u.username,
       u.created_at,
       COUNT(b.id)::int AS total_trades,
-      COALESCE(SUM(CASE WHEN b.result = 'Win' THEN 1 ELSE 0 END), 0)::int AS wins
+      COALESCE(SUM(CASE WHEN b.result = 'Win' THEN 1 ELSE 0 END), 0)::int AS wins,
+      COALESCE(SUM(
+        CASE
+          WHEN b.result = 'Loss' AND b.pnl_absolute > 0 THEN -ABS(b.pnl_absolute)
+          WHEN b.result = 'Win' AND b.pnl_absolute < 0 THEN ABS(b.pnl_absolute)
+          ELSE b.pnl_absolute
+        END
+      ), 0) AS total_pnl
     FROM public.users u
     LEFT JOIN public.backtest_entries b ON b.user_id = u.id
     GROUP BY u.id, u.username, u.created_at
@@ -139,9 +147,10 @@ AS $$
       WHEN us.total_trades = 0 THEN 0
       ELSE ROUND((us.wins::numeric / us.total_trades) * 100)::int
     END AS win_rate,
+    us.total_pnl,
     bp.asset_pair AS best_asset_pair,
     us.created_at AS joined_at
   FROM user_stats us
   LEFT JOIN best_pair bp ON bp.user_id = us.id
-  ORDER BY us.total_trades DESC, us.created_at DESC;
+  ORDER BY us.total_pnl DESC, us.created_at DESC;
 $$;

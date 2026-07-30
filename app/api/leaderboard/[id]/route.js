@@ -27,6 +27,7 @@ export async function GET(request, { params }) {
       username: profile.username,
       totalTrades: profile.total_trades,
       winRate: profile.win_rate,
+      totalPnl: profile.total_pnl != null ? Number(profile.total_pnl) : 0,
       bestAssetPair: profile.best_asset_pair,
       joinedAt: profile.joined_at,
       trades,

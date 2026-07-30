@@ -37,7 +37,10 @@ export default function TraderProfileClient({ profile, trades = [], session = nu
     );
   }
 
-  const netPnl = trades.reduce((sum, trade) => sum + getCorrectedPnl(trade), 0);
+  const netPnl =
+    profile.totalPnl != null && Number.isFinite(Number(profile.totalPnl))
+      ? Number(profile.totalPnl)
+      : trades.reduce((sum, trade) => sum + getCorrectedPnl(trade), 0);
 
   return (
     <div className="min-h-screen bg-white text-black">
@@ -63,14 +66,12 @@ export default function TraderProfileClient({ profile, trades = [], session = nu
                 <div className="text-lg font-semibold">{profile.bestAssetPair}</div>
               </div>
             )}
-            {trades.length > 0 && (
-              <div>
-                <div className="text-zinc-500 text-xs uppercase mb-1">Net P&amp;L</div>
-                <div className={`text-2xl font-bold ${netPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatPnlCurrency(netPnl)}
-                </div>
+            <div>
+              <div className="text-zinc-500 text-xs uppercase mb-1">Net P&amp;L</div>
+              <div className={`text-2xl font-bold ${netPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatPnlCurrency(netPnl)}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
