@@ -39,21 +39,17 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-16 relative">
+    <div className="min-h-screen flex items-center justify-center px-4 py-16 relative bg-canvas">
       <div className="w-full max-w-md">
-        <div className="border-4 border-black bg-white p-8 md:p-12 shadow-brutal-2xl">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Login</h1>
-          <div className="w-full h-1 bg-black mb-8"></div>
+        <div className="fc-card p-8 md:p-12">
+          <h1 className="fc-heading-lg text-4xl md:text-5xl mb-2">Login</h1>
+          <p className="text-brown mb-8">Welcome back. Log in to keep your journal going.</p>
 
-          {error && (
-            <div className="mb-6 p-4 border-2 border-black bg-red-50 text-red-900">
-              {error}
-            </div>
-          )}
+          {error && <div className="fc-banner fc-banner-error mb-6">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-bold mb-2 uppercase">
+              <label htmlFor="email" className="fc-label">
                 Email
               </label>
               <input
@@ -62,12 +58,12 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent"
+                className="fc-input"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-bold mb-2 uppercase">
+              <label htmlFor="password" className="fc-label">
                 Password
               </label>
               <div className="relative">
@@ -78,12 +74,12 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full pl-4 pr-14 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent"
+                  className="fc-input pr-16"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 border-2 border-black bg-white text-xs font-bold uppercase hover:bg-zinc-100 shadow-brutal-sm active:shadow-none active:translate-x-[1px] active:translate-y-[1px]"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-full text-xs font-semibold text-charcoal hover:bg-stone transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   aria-pressed={showPassword}
                 >
@@ -92,19 +88,15 @@ export default function Login() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full px-6 py-4 border-4 border-black bg-orange-600 text-white text-lg font-bold hover:bg-orange-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <button type="submit" disabled={loading} className="fc-btn fc-btn-primary w-full text-base py-3.5">
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-brown">
               Don't have an account?{' '}
-              <Link href="/signup" className="font-bold text-orange-600 hover:underline">
+              <Link href="/signup" className="font-semibold text-[#ff3e00] hover:underline">
                 Sign up
               </Link>
             </p>
