@@ -47,7 +47,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
 
       const response = await fetch(`/api/trades?${params.toString()}`)
       if (!response.ok) throw new Error('Failed to fetch trades')
-      
+
       const data = await response.json()
       // Use startTransition for non-urgent state updates
       startTransition(() => {
@@ -83,12 +83,12 @@ export default function TradeLog({ initialTrades = [], session = null }) {
     }))
   }
 
-  const getResultColor = (result) => {
+  const getResultBadgeClass = (result) => {
     switch (result) {
-      case 'Win': return 'bg-green-100 text-green-900 border-green-600'
-      case 'Loss': return 'bg-red-100 text-red-900 border-red-600'
-      case 'Break Even': return 'bg-yellow-100 text-yellow-900 border-yellow-600'
-      default: return 'bg-zinc-100 text-zinc-900 border-zinc-600'
+      case 'Win': return 'fc-badge-win'
+      case 'Loss': return 'fc-badge-loss'
+      case 'Break Even': return 'fc-badge-neutral'
+      default: return 'fc-badge-tag'
     }
   }
 
@@ -102,7 +102,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
 
   const handleDelete = async (tradeId, e) => {
     e.stopPropagation() // Prevent opening the modal when clicking delete
-    
+
     if (!confirm('Are you sure you want to delete this trade? This action cannot be undone.')) {
       return
     }
@@ -110,7 +110,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
     // Optimistic update: Remove from UI immediately
     const tradeToDelete = trades.find(t => t.id === tradeId)
     setTrades(prevTrades => prevTrades.filter(trade => trade.id !== tradeId))
-    
+
     // Close modal if the deleted trade was selected
     if (selectedTrade && selectedTrade.id === tradeId) {
       setSelectedTrade(null)
@@ -155,14 +155,14 @@ export default function TradeLog({ initialTrades = [], session = null }) {
       `⚠️ WARNING: This will delete ALL ${trades.length} trades permanently!\n\n` +
       'This action CANNOT be undone. Are you absolutely sure?'
     )
-    
+
     if (!firstConfirm) return
 
     const secondConfirm = confirm(
       'FINAL CONFIRMATION: You are about to delete ALL your trades.\n\n' +
       'Type "DELETE ALL" in the next prompt to confirm, or click Cancel to abort.'
     )
-    
+
     if (!secondConfirm) return
 
     const typedConfirm = prompt(
@@ -183,7 +183,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
     try {
       setDeletingAll(true)
       setError('')
-      
+
       const response = await fetch('/api/trades/delete-all', {
         method: 'DELETE',
         credentials: 'include'
@@ -212,13 +212,13 @@ export default function TradeLog({ initialTrades = [], session = null }) {
 
   // Show cached data while loading if available
   const displayTrades = trades.length > 0 ? trades : []
-  
+
   if (loading && displayTrades.length === 0) {
     return (
       <>
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="text-center text-xl font-bold">Loading trades...</div>
+          <div className="text-center text-xl font-semibold text-brown">Loading trades...</div>
         </div>
       </>
     )
@@ -230,8 +230,8 @@ export default function TradeLog({ initialTrades = [], session = null }) {
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-16">
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2 inline-flex items-center gap-3">
-              <svg className="w-10 h-10 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden>
+            <h1 className="fc-heading-lg text-4xl md:text-5xl inline-flex items-center gap-3">
+              <svg className="w-9 h-9 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden>
                 <path d="M0 0h48v48H0z" fill="none" />
                 <g fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="4">
                   <path d="M13 10h28v34H13z" />
@@ -240,20 +240,16 @@ export default function TradeLog({ initialTrades = [], session = null }) {
               </svg>
               Trade Log
             </h1>
-            <div className="w-full h-1 bg-black"></div>
           </div>
           <div className="flex gap-3">
-            <Link
-              href="/trades/new"
-              className="px-6 py-3 border-4 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-            >
+            <Link href="/trades/new" className="fc-btn fc-btn-primary">
               + New Trade
             </Link>
             {displayTrades.length > 0 && (
               <button
                 onClick={handleDeleteAll}
                 disabled={deletingAll}
-                className="px-6 py-3 border-4 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fc-btn fc-btn-danger"
               >
                 {deletingAll ? 'Deleting...' : 'Delete All Trades'}
               </button>
@@ -262,16 +258,16 @@ export default function TradeLog({ initialTrades = [], session = null }) {
         </div>
 
         {/* Filters */}
-        <div className="border-4 border-black bg-white p-6 mb-8 shadow-brutal-xl">
-          <h2 className="text-xl font-bold mb-4 uppercase">Filters</h2>
+        <div className="fc-card p-6 mb-8">
+          <h2 className="fc-heading text-lg mb-4">Filters</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-bold mb-2 uppercase">Account</label>
+              <label className="fc-label">Account</label>
               <select
                 name="accountId"
                 value={filters.accountId}
                 onChange={handleFilterChange}
-                className="w-full px-4 py-2 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                className="fc-input fc-input-sm"
               >
                 <option value="">All accounts</option>
                 {accounts.map((a) => (
@@ -282,23 +278,23 @@ export default function TradeLog({ initialTrades = [], session = null }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-bold mb-2 uppercase">Asset/Pair</label>
+              <label className="fc-label">Asset/Pair</label>
               <input
                 type="text"
                 name="assetPair"
                 value={filters.assetPair}
                 onChange={handleFilterChange}
                 placeholder="Filter by asset..."
-                className="w-full px-4 py-2 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                className="fc-input fc-input-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold mb-2 uppercase">Result</label>
+              <label className="fc-label">Result</label>
               <select
                 name="result"
                 value={filters.result}
                 onChange={handleFilterChange}
-                className="w-full px-4 py-2 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                className="fc-input fc-input-sm"
               >
                 <option value="">All</option>
                 <option value="Win">Win</option>
@@ -308,27 +304,21 @@ export default function TradeLog({ initialTrades = [], session = null }) {
           </div>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 border-2 border-black bg-red-50 text-red-900">
-            {error}
-          </div>
-        )}
-        
+        {error && <div className="fc-banner fc-banner-error mb-6">{error}</div>}
+
         {(loading || isPending) && displayTrades.length > 0 && (
-          <div className="mb-6 p-3 border-2 border-black bg-blue-50 text-blue-900 text-sm">
-            🔄 Refreshing trades...
-          </div>
+          <div className="fc-banner fc-banner-info mb-6">Refreshing trades...</div>
         )}
 
         {/* Trade List */}
         {displayTrades.length === 0 && !loading ? (
-          <div className="border-4 border-black bg-white p-8 text-center text-zinc-600 shadow-brutal-xl">
-            No trades found. <Link href="/trades/new" className="text-orange-600 font-bold hover:underline">Create your first trade entry</Link>
+          <div className="fc-card p-8 text-center text-brown">
+            No trades found. <Link href="/trades/new" className="text-[#ff3e00] font-semibold hover:underline">Create your first trade entry</Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {displayTrades.map((trade) => {
-              const pnlColor = getCorrectedPnl(trade) >= 0 ? 'text-green-600' : 'text-red-600'
+              const pnlClass = getCorrectedPnl(trade) >= 0 ? 'fc-text-pos' : 'fc-text-neg'
 
               return (
                 <div
@@ -342,32 +332,30 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                       setSelectedTrade(trade)
                     }
                   }}
-                  className="border-4 border-black bg-white p-5 shadow-brutal-lg hover:-translate-y-[1px] hover:shadow-brutal-xl transition-all cursor-pointer"
+                  className="fc-card fc-card-hover p-5 cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs uppercase font-bold text-zinc-500 mb-2">
+                      <div className="text-xs font-semibold text-muted mb-2">
                         {format(new Date(trade.date_time), 'MMM d, yyyy HH:mm')}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         {trade.account_label && (
-                          <span className="px-2 py-1 border-2 border-black bg-zinc-100 text-black text-xs font-bold uppercase">
-                            {trade.account_label}
-                          </span>
+                          <span className="fc-badge fc-badge-tag">{trade.account_label}</span>
                         )}
-                        <p className="text-xl md:text-2xl font-bold tracking-tight uppercase">{trade.asset_pair}</p>
-                        <span className={`px-2 py-1 border-2 ${trade.direction === 'Long' ? 'border-green-600 bg-green-100 text-green-900' : 'border-red-600 bg-red-100 text-red-900'} font-bold text-xs`}>
+                        <p className="text-xl md:text-2xl font-semibold text-ink">{trade.asset_pair}</p>
+                        <span className={`fc-badge ${trade.direction === 'Long' ? 'fc-badge-win' : 'fc-badge-loss'}`}>
                           {trade.direction}
                         </span>
-                        <p className={`text-lg md:text-xl font-bold ${pnlColor}`}>
+                        <p className={`text-lg md:text-xl font-semibold ${pnlClass}`}>
                           {formatPnlCurrency(getCorrectedPnl(trade))}
                         </p>
                       </div>
 
                       <div>
-                        <span className="text-xs font-bold uppercase text-zinc-600 mr-2">Result</span>
-                        <span className={`px-2 py-1 border-2 ${getResultColor(trade.result)} font-bold text-xs`}>
+                        <span className="text-xs font-semibold text-muted mr-2">Result</span>
+                        <span className={`fc-badge ${getResultBadgeClass(trade.result)}`}>
                           {trade.result}
                         </span>
                       </div>
@@ -376,7 +364,7 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                     <button
                       onClick={(e) => handleDelete(trade.id, e)}
                       disabled={deletingTradeId === trade.id}
-                      className="px-3 py-2 border-2 border-black bg-red-600 text-white text-xs md:text-sm font-bold hover:bg-red-500 transition-colors shadow-brutal-sm active:shadow-none active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="fc-btn fc-btn-danger fc-btn-sm"
                     >
                       {deletingTradeId === trade.id ? 'Deleting...' : 'Delete'}
                     </button>
@@ -389,15 +377,15 @@ export default function TradeLog({ initialTrades = [], session = null }) {
 
         {/* Trade Detail Modal */}
         {selectedTrade && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedTrade(null)}>
-            <div className="border-4 border-black bg-white p-4 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-brutal-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-[var(--overlay)] flex items-center justify-center p-4 z-50" onClick={() => setSelectedTrade(null)}>
+            <div className="fc-card p-4 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
-                <h2 className="text-3xl font-bold uppercase leading-none">Trade Details</h2>
+                <h2 className="fc-heading text-2xl md:text-3xl leading-none">Trade Details</h2>
                 <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:gap-2">
                   <Link
                     href={`/trades/${selectedTrade.id}/edit`}
                     onClick={(e) => e.stopPropagation()}
-                    className="px-3 md:px-4 py-2 border-2 border-black bg-orange-600 text-white font-bold text-center hover:bg-orange-500 transition-colors shadow-brutal-sm"
+                    className="fc-btn fc-btn-primary fc-btn-sm text-center"
                   >
                     Edit
                   </Link>
@@ -407,85 +395,85 @@ export default function TradeLog({ initialTrades = [], session = null }) {
                       handleDelete(selectedTrade.id, e)
                     }}
                     disabled={deletingTradeId === selectedTrade.id}
-                    className="px-3 md:px-4 py-2 border-2 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-brutal-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="fc-btn fc-btn-danger fc-btn-sm"
                   >
                     {deletingTradeId === selectedTrade.id ? 'Deleting...' : 'Delete Trade'}
                   </button>
                   <button
                     onClick={() => setSelectedTrade(null)}
-                    className="px-3 md:px-4 py-2 border-2 border-black bg-zinc-600 text-white font-bold hover:bg-zinc-500 transition-colors shadow-brutal-sm"
+                    className="fc-btn fc-btn-secondary fc-btn-sm"
                   >
-                    ×
+                    Close
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {/* Trade Identification */}
                 <div>
-                  <h3 className="text-lg font-bold uppercase mb-4">Trade Identification</h3>
+                  <h3 className="fc-heading text-base mb-4">Trade Identification</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Start Date/Time</p>
-                      <p className="text-lg font-semibold">{format(new Date(selectedTrade.date_time), 'MMMM d, yyyy HH:mm')}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Start Date/Time</p>
+                      <p className="text-base font-medium text-charcoal">{format(new Date(selectedTrade.date_time), 'MMMM d, yyyy HH:mm')}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">End Date/Time</p>
-                      <p className="text-lg font-semibold">
-                        {selectedTrade.end_date 
+                      <p className="text-xs font-semibold text-muted uppercase">End Date/Time</p>
+                      <p className="text-base font-medium text-charcoal">
+                        {selectedTrade.end_date
                           ? format(new Date(selectedTrade.end_date), 'MMMM d, yyyy HH:mm')
                           : format(new Date(selectedTrade.date_time), 'MMMM d, yyyy HH:mm')}
                       </p>
                     </div>
                     {selectedTrade.account_label && (
                       <div className="col-span-2">
-                        <p className="text-sm font-bold text-zinc-600 uppercase">Trading account</p>
-                        <p className="text-lg font-semibold">{selectedTrade.account_label}</p>
+                        <p className="text-xs font-semibold text-muted uppercase">Trading account</p>
+                        <p className="text-base font-medium text-charcoal">{selectedTrade.account_label}</p>
                       </div>
                     )}
                     <div className="col-span-2">
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Asset/Pair</p>
-                      <p className="text-lg font-semibold">{selectedTrade.asset_pair}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Asset/Pair</p>
+                      <p className="text-base font-medium text-charcoal">{selectedTrade.asset_pair}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Execution Details */}
                 <div>
-                  <h3 className="text-lg font-bold uppercase mb-4">Execution Details</h3>
+                  <h3 className="fc-heading text-base mb-4">Execution Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Direction</p>
-                      <p className="text-lg font-semibold">{selectedTrade.direction}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Direction</p>
+                      <p className="text-base font-medium text-charcoal">{selectedTrade.direction}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Entry Price</p>
-                      <p className="text-lg font-semibold">{formatDecimalTrim(selectedTrade.entry_price)}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Entry Price</p>
+                      <p className="text-base font-medium text-charcoal">{formatDecimalTrim(selectedTrade.entry_price)}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Exit Price</p>
-                      <p className="text-lg font-semibold">{formatDecimalTrim(selectedTrade.exit_price)}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Exit Price</p>
+                      <p className="text-base font-medium text-charcoal">{formatDecimalTrim(selectedTrade.exit_price)}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Outcome */}
                 <div>
-                  <h3 className="text-lg font-bold uppercase mb-4">Outcome</h3>
+                  <h3 className="fc-heading text-base mb-4">Outcome</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">P&L</p>
+                      <p className="text-xs font-semibold text-muted uppercase">P&amp;L</p>
                       <p
-                        className={`text-lg font-semibold ${
-                          getCorrectedPnl(selectedTrade) >= 0 ? 'text-green-600' : 'text-red-600'
+                        className={`text-base font-semibold ${
+                          getCorrectedPnl(selectedTrade) >= 0 ? 'fc-text-pos' : 'fc-text-neg'
                         }`}
                       >
                         {formatPnlCurrency(getCorrectedPnl(selectedTrade))}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Result</p>
-                      <p className={`text-lg font-semibold ${selectedTrade.result === 'Win' ? 'text-green-600' : 'text-red-600'}`}>
+                      <p className="text-xs font-semibold text-muted uppercase">Result</p>
+                      <p className={`text-base font-semibold ${selectedTrade.result === 'Win' ? 'fc-text-pos' : 'fc-text-neg'}`}>
                         {selectedTrade.result}
                       </p>
                     </div>
@@ -494,23 +482,23 @@ export default function TradeLog({ initialTrades = [], session = null }) {
 
                 {selectedTrade.screenshot_url && (
                   <div>
-                    <h3 className="text-lg font-bold uppercase mb-4">Screenshot Reference</h3>
+                    <h3 className="fc-heading text-base mb-4">Screenshot Reference</h3>
                     <a
                       href={selectedTrade.screenshot_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block border-2 border-black bg-zinc-100 px-3 py-1 text-xs font-bold uppercase hover:bg-zinc-200 mb-3"
+                      className="fc-badge fc-badge-tag mb-3 hover:bg-stone-border"
                     >
                       Open Full Image
                     </a>
-                    <div className="border-2 border-black bg-zinc-50 p-2 overflow-hidden">
+                    <div className="fc-surface p-2 overflow-hidden">
                       <Image
                         src={selectedTrade.screenshot_url}
                         alt="Trade screenshot"
                         width={600}
                         height={400}
                         unoptimized={selectedTrade.screenshot_url?.startsWith?.('data:')}
-                        className="max-h-96 w-full object-contain"
+                        className="max-h-96 w-full object-contain rounded-[10px]"
                       />
                     </div>
                   </div>
@@ -523,4 +511,3 @@ export default function TradeLog({ initialTrades = [], session = null }) {
     </>
   )
 }
-
