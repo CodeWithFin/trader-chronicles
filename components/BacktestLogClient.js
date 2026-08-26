@@ -61,14 +61,14 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
     })
   }
 
-  const getResultColor = (result) => {
+  const getResultBadgeClass = (result) => {
     switch (result) {
       case 'Win':
-        return 'bg-green-100 text-green-900 border-green-600'
+        return 'fc-badge-win'
       case 'Loss':
-        return 'bg-red-100 text-red-900 border-red-600'
+        return 'fc-badge-loss'
       default:
-        return 'bg-zinc-100 text-zinc-900 border-zinc-600'
+        return 'fc-badge-tag'
     }
   }
 
@@ -156,7 +156,7 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
       <>
         <Navbar initialSession={session} />
         <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="text-center text-xl font-bold">Loading backtests...</div>
+          <div className="text-center text-xl font-semibold text-brown">Loading backtests...</div>
         </div>
       </>
     )
@@ -168,30 +168,23 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-16">
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2">Backtesting</h1>
-            <div className="w-full h-1 bg-black"></div>
-            <p className="text-sm text-zinc-600 mt-3 max-w-xl">
+            <h1 className="fc-heading-lg text-4xl md:text-5xl mb-2">Backtesting</h1>
+            <p className="text-sm text-brown max-w-xl">
               Test strategies with simulated trades. These records are kept completely separate from your live Trade Log.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link
-              href="/backtesting/new"
-              className="px-6 py-3 border-4 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-            >
+            <Link href="/backtesting/new" className="fc-btn fc-btn-primary">
               + New Backtest
             </Link>
-            <Link
-              href="/backtesting/analytics"
-              className="px-6 py-3 border-4 border-black bg-white text-black font-bold hover:bg-zinc-100 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-            >
+            <Link href="/backtesting/analytics" className="fc-btn fc-btn-secondary">
               View Analytics
             </Link>
             {entries.length > 0 && (
               <button
                 onClick={handleDeleteAll}
                 disabled={deletingAll}
-                className="px-6 py-3 border-4 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fc-btn fc-btn-danger"
               >
                 {deletingAll ? 'Deleting...' : filters.strategyName ? 'Delete Strategy' : 'Delete All'}
               </button>
@@ -200,38 +193,38 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
         </div>
 
         {/* Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="border-2 border-black bg-white p-4 shadow-brutal-md">
-            <p className="text-xs font-bold text-zinc-600 uppercase mb-1">Entries</p>
-            <p className="text-3xl font-bold">{totalTrades}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          <div className="fc-card p-4">
+            <p className="text-xs font-semibold text-muted uppercase mb-1">Entries</p>
+            <p className="text-2xl font-semibold text-ink">{totalTrades}</p>
           </div>
-          <div className="border-2 border-black bg-white p-4 shadow-brutal-md">
-            <p className="text-xs font-bold text-zinc-600 uppercase mb-1">Win Rate</p>
-            <p className="text-3xl font-bold text-green-600">{winRate.toFixed(1)}%</p>
+          <div className="fc-card p-4">
+            <p className="text-xs font-semibold text-muted uppercase mb-1">Win Rate</p>
+            <p className="text-2xl font-semibold fc-text-pos">{winRate.toFixed(1)}%</p>
           </div>
-          <div className="border-2 border-black bg-white p-4 shadow-brutal-md">
-            <p className="text-xs font-bold text-zinc-600 uppercase mb-1">Wins</p>
-            <p className="text-3xl font-bold">{wins}</p>
+          <div className="fc-card p-4">
+            <p className="text-xs font-semibold text-muted uppercase mb-1">Wins</p>
+            <p className="text-2xl font-semibold text-ink">{wins}</p>
           </div>
-          <div className="border-2 border-black bg-white p-4 shadow-brutal-md">
-            <p className="text-xs font-bold text-zinc-600 uppercase mb-1">Net P&L</p>
-            <p className={`text-3xl font-bold ${netPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className="fc-card p-4">
+            <p className="text-xs font-semibold text-muted uppercase mb-1">Net P&amp;L</p>
+            <p className={`text-2xl font-semibold ${netPnl >= 0 ? 'fc-text-pos' : 'fc-text-neg'}`}>
               {formatPnlCurrency(netPnl)}
             </p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="border-4 border-black bg-white p-6 mb-8 shadow-brutal-xl">
-          <h2 className="text-xl font-bold mb-4 uppercase">Filters</h2>
+        <div className="fc-card p-6 mb-8">
+          <h2 className="fc-heading text-lg mb-4">Filters</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-bold mb-2 uppercase">Strategy</label>
+              <label className="fc-label">Strategy</label>
               <select
                 name="strategyName"
                 value={filters.strategyName}
                 onChange={handleFilterChange}
-                className="w-full px-4 py-2 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                className="fc-input fc-input-sm"
               >
                 <option value="">All strategies</option>
                 {strategies.map((s) => (
@@ -242,23 +235,23 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-bold mb-2 uppercase">Asset/Pair</label>
+              <label className="fc-label">Asset/Pair</label>
               <input
                 type="text"
                 name="assetPair"
                 value={filters.assetPair}
                 onChange={handleFilterChange}
                 placeholder="Filter by asset..."
-                className="w-full px-4 py-2 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                className="fc-input fc-input-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold mb-2 uppercase">Result</label>
+              <label className="fc-label">Result</label>
               <select
                 name="result"
                 value={filters.result}
                 onChange={handleFilterChange}
-                className="w-full px-4 py-2 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                className="fc-input fc-input-sm"
               >
                 <option value="">All</option>
                 <option value="Win">Win</option>
@@ -268,26 +261,24 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
           </div>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 border-2 border-black bg-red-50 text-red-900">{error}</div>
-        )}
+        {error && <div className="fc-banner fc-banner-error mb-6">{error}</div>}
 
         {(loading || isPending) && entries.length > 0 && (
-          <div className="mb-6 p-3 border-2 border-black bg-blue-50 text-blue-900 text-sm">Refreshing...</div>
+          <div className="fc-banner fc-banner-info mb-6">Refreshing...</div>
         )}
 
         {/* Entry List */}
         {entries.length === 0 && !loading ? (
-          <div className="border-4 border-black bg-white p-8 text-center text-zinc-600 shadow-brutal-xl">
+          <div className="fc-card p-8 text-center text-brown">
             No backtest entries yet.{' '}
-            <Link href="/backtesting/new" className="text-orange-600 font-bold hover:underline">
+            <Link href="/backtesting/new" className="text-[#ff3e00] font-semibold hover:underline">
               Add your first backtest trade
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {entries.map((entry) => {
-              const pnlColor = getCorrectedPnl(entry) >= 0 ? 'text-green-600' : 'text-red-600'
+              const pnlClass = getCorrectedPnl(entry) >= 0 ? 'fc-text-pos' : 'fc-text-neg'
               return (
                 <div
                   key={entry.id}
@@ -300,36 +291,28 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
                       setSelectedEntry(entry)
                     }
                   }}
-                  className="border-4 border-black bg-white p-5 shadow-brutal-lg hover:-translate-y-[1px] hover:shadow-brutal-xl transition-all cursor-pointer"
+                  className="fc-card fc-card-hover p-5 cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs uppercase font-bold text-zinc-500 mb-2">
+                      <div className="text-xs font-semibold text-muted mb-2">
                         {format(new Date(entry.date_time), 'MMM d, yyyy HH:mm')}
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         {entry.strategy_name && (
-                          <span className="px-2 py-1 border-2 border-black bg-orange-100 text-orange-900 text-xs font-bold uppercase">
-                            {entry.strategy_name}
-                          </span>
+                          <span className="fc-badge fc-badge-accent">{entry.strategy_name}</span>
                         )}
-                        <p className="text-xl md:text-2xl font-bold tracking-tight uppercase">{entry.asset_pair}</p>
-                        <span
-                          className={`px-2 py-1 border-2 ${
-                            entry.direction === 'Long'
-                              ? 'border-green-600 bg-green-100 text-green-900'
-                              : 'border-red-600 bg-red-100 text-red-900'
-                          } font-bold text-xs`}
-                        >
+                        <p className="text-xl md:text-2xl font-semibold text-ink">{entry.asset_pair}</p>
+                        <span className={`fc-badge ${entry.direction === 'Long' ? 'fc-badge-win' : 'fc-badge-loss'}`}>
                           {entry.direction}
                         </span>
-                        <p className={`text-lg md:text-xl font-bold ${pnlColor}`}>
+                        <p className={`text-lg md:text-xl font-semibold ${pnlClass}`}>
                           {formatPnlCurrency(getCorrectedPnl(entry))}
                         </p>
                       </div>
                       <div>
-                        <span className="text-xs font-bold uppercase text-zinc-600 mr-2">Result</span>
-                        <span className={`px-2 py-1 border-2 ${getResultColor(entry.result)} font-bold text-xs`}>
+                        <span className="text-xs font-semibold text-muted mr-2">Result</span>
+                        <span className={`fc-badge ${getResultBadgeClass(entry.result)}`}>
                           {entry.result}
                         </span>
                       </div>
@@ -337,7 +320,7 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
                     <button
                       onClick={(e) => handleDelete(entry.id, e)}
                       disabled={deletingId === entry.id}
-                      className="px-3 py-2 border-2 border-black bg-red-600 text-white text-xs md:text-sm font-bold hover:bg-red-500 transition-colors shadow-brutal-sm active:shadow-none active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="fc-btn fc-btn-danger fc-btn-sm"
                     >
                       {deletingId === entry.id ? 'Deleting...' : 'Delete'}
                     </button>
@@ -351,20 +334,20 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
         {/* Detail Modal */}
         {selectedEntry && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-[var(--overlay)] flex items-center justify-center p-4 z-50"
             onClick={() => setSelectedEntry(null)}
           >
             <div
-              className="border-4 border-black bg-white p-4 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-brutal-2xl"
+              className="fc-card p-4 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
-                <h2 className="text-3xl font-bold uppercase leading-none">Backtest Details</h2>
+                <h2 className="fc-heading text-2xl md:text-3xl leading-none">Backtest Details</h2>
                 <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:gap-2">
                   <Link
                     href={`/backtesting/${selectedEntry.id}/edit`}
                     onClick={(e) => e.stopPropagation()}
-                    className="px-3 md:px-4 py-2 border-2 border-black bg-orange-600 text-white font-bold text-center hover:bg-orange-500 transition-colors shadow-brutal-sm"
+                    className="fc-btn fc-btn-primary fc-btn-sm text-center"
                   >
                     Edit
                   </Link>
@@ -374,84 +357,84 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
                       handleDelete(selectedEntry.id, e)
                     }}
                     disabled={deletingId === selectedEntry.id}
-                    className="px-3 md:px-4 py-2 border-2 border-black bg-red-600 text-white font-bold hover:bg-red-500 transition-colors shadow-brutal-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="fc-btn fc-btn-danger fc-btn-sm"
                   >
                     {deletingId === selectedEntry.id ? 'Deleting...' : 'Delete'}
                   </button>
                   <button
                     onClick={() => setSelectedEntry(null)}
-                    className="px-3 md:px-4 py-2 border-2 border-black bg-zinc-600 text-white font-bold hover:bg-zinc-500 transition-colors shadow-brutal-sm"
+                    className="fc-btn fc-btn-secondary fc-btn-sm"
                   >
-                    ×
+                    Close
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold uppercase mb-4">Strategy & Identification</h3>
+                  <h3 className="fc-heading text-base mb-4">Strategy &amp; Identification</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="col-span-2">
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Strategy</p>
-                      <p className="text-lg font-semibold">{selectedEntry.strategy_name}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Strategy</p>
+                      <p className="text-base font-medium text-charcoal">{selectedEntry.strategy_name}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Start Date/Time</p>
-                      <p className="text-lg font-semibold">
+                      <p className="text-xs font-semibold text-muted uppercase">Start Date/Time</p>
+                      <p className="text-base font-medium text-charcoal">
                         {format(new Date(selectedEntry.date_time), 'MMMM d, yyyy HH:mm')}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">End Date/Time</p>
-                      <p className="text-lg font-semibold">
+                      <p className="text-xs font-semibold text-muted uppercase">End Date/Time</p>
+                      <p className="text-base font-medium text-charcoal">
                         {selectedEntry.end_date
                           ? format(new Date(selectedEntry.end_date), 'MMMM d, yyyy HH:mm')
                           : format(new Date(selectedEntry.date_time), 'MMMM d, yyyy HH:mm')}
                       </p>
                     </div>
                     <div className="col-span-2">
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Asset/Pair</p>
-                      <p className="text-lg font-semibold">{selectedEntry.asset_pair}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Asset/Pair</p>
+                      <p className="text-base font-medium text-charcoal">{selectedEntry.asset_pair}</p>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-bold uppercase mb-4">Execution Details</h3>
+                  <h3 className="fc-heading text-base mb-4">Execution Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Direction</p>
-                      <p className="text-lg font-semibold">{selectedEntry.direction}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Direction</p>
+                      <p className="text-base font-medium text-charcoal">{selectedEntry.direction}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Entry Price</p>
-                      <p className="text-lg font-semibold">{formatDecimalTrim(selectedEntry.entry_price)}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Entry Price</p>
+                      <p className="text-base font-medium text-charcoal">{formatDecimalTrim(selectedEntry.entry_price)}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Exit Price</p>
-                      <p className="text-lg font-semibold">{formatDecimalTrim(selectedEntry.exit_price)}</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Exit Price</p>
+                      <p className="text-base font-medium text-charcoal">{formatDecimalTrim(selectedEntry.exit_price)}</p>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-bold uppercase mb-4">Outcome</h3>
+                  <h3 className="fc-heading text-base mb-4">Outcome</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">P&L</p>
+                      <p className="text-xs font-semibold text-muted uppercase">P&amp;L</p>
                       <p
-                        className={`text-lg font-semibold ${
-                          getCorrectedPnl(selectedEntry) >= 0 ? 'text-green-600' : 'text-red-600'
+                        className={`text-base font-semibold ${
+                          getCorrectedPnl(selectedEntry) >= 0 ? 'fc-text-pos' : 'fc-text-neg'
                         }`}
                       >
                         {formatPnlCurrency(getCorrectedPnl(selectedEntry))}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-zinc-600 uppercase">Result</p>
+                      <p className="text-xs font-semibold text-muted uppercase">Result</p>
                       <p
-                        className={`text-lg font-semibold ${
-                          selectedEntry.result === 'Win' ? 'text-green-600' : 'text-red-600'
+                        className={`text-base font-semibold ${
+                          selectedEntry.result === 'Win' ? 'fc-text-pos' : 'fc-text-neg'
                         }`}
                       >
                         {selectedEntry.result}
@@ -462,23 +445,23 @@ export default function BacktestLog({ initialEntries = [], session = null }) {
 
                 {selectedEntry.screenshot_url && (
                   <div>
-                    <h3 className="text-lg font-bold uppercase mb-4">Screenshot Reference</h3>
+                    <h3 className="fc-heading text-base mb-4">Screenshot Reference</h3>
                     <a
                       href={selectedEntry.screenshot_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block border-2 border-black bg-zinc-100 px-3 py-1 text-xs font-bold uppercase hover:bg-zinc-200 mb-3"
+                      className="fc-badge fc-badge-tag mb-3 hover:bg-stone-border"
                     >
                       Open Full Image
                     </a>
-                    <div className="border-2 border-black bg-zinc-50 p-2 overflow-hidden">
+                    <div className="fc-surface p-2 overflow-hidden">
                       <Image
                         src={selectedEntry.screenshot_url}
                         alt="Backtest screenshot"
                         width={600}
                         height={400}
                         unoptimized={selectedEntry.screenshot_url?.startsWith?.('data:')}
-                        className="max-h-96 w-full object-contain"
+                        className="max-h-96 w-full object-contain rounded-[10px]"
                       />
                     </div>
                   </div>

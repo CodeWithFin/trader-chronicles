@@ -87,7 +87,7 @@ export default function TradingAccountsClient({ session = null }) {
     return (
       <>
         <Navbar initialSession={session} />
-        <div className="max-w-3xl mx-auto px-4 py-16 text-center font-bold">Loading…</div>
+        <div className="max-w-3xl mx-auto px-4 py-16 text-center font-semibold text-brown">Loading…</div>
       </>
     )
   }
@@ -96,8 +96,8 @@ export default function TradingAccountsClient({ session = null }) {
     <>
       <Navbar initialSession={session} />
       <div className="max-w-3xl mx-auto px-4 py-8 md:py-16">
-        <h1 className="text-4xl font-bold uppercase tracking-tight mb-2 inline-flex items-center gap-3">
-          <svg className="w-9 h-9 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden>
+        <h1 className="fc-heading-lg text-4xl mb-2 inline-flex items-center gap-3">
+          <svg className="w-8 h-8 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden>
             <path d="M0 0h48v48H0z" fill="none" />
             <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3">
               <path d="M12.527 7c.551-2.024 2.29-3.486 4.473-3.643C19.556 3.173 23.335 3 28.5 3c5.133 0 8.897.171 11.452.354c2.558.182 4.512 2.136 4.694 4.694c.183 2.555.354 6.32.354 11.452c0 5.165-.173 8.944-.357 11.5c-.157 2.183-1.62 3.922-3.643 4.473" />
@@ -107,26 +107,23 @@ export default function TradingAccountsClient({ session = null }) {
           </svg>
           Trading accounts
         </h1>
-        <div className="w-full h-1 bg-black mb-2" />
-        <p className="text-zinc-600 mb-8 text-sm">
+        <p className="text-brown mb-8 text-sm">
           Each trade is tagged to one account so analytics and P&amp;L stay separate (eval, funded, live, etc.).
         </p>
 
         {migrationNotice && (
-          <div className="mb-6 border-4 border-black bg-amber-50 p-4 text-sm text-black shadow-brutal-md">
-            <p className="font-bold uppercase mb-2">Database migration needed</p>
+          <div className="mb-6 fc-banner fc-banner-warn">
+            <p className="font-semibold uppercase mb-2 text-xs">Database migration needed</p>
             <p className="leading-relaxed">{migrationNotice}</p>
           </div>
         )}
 
-        {error && (
-          <div className="mb-6 p-4 border-2 border-black bg-red-50 text-red-900 text-sm">{error}</div>
-        )}
+        {error && <div className="mb-6 fc-banner fc-banner-error">{error}</div>}
 
-        <div className="border-4 border-black bg-white p-6 shadow-brutal-xl mb-8">
-          <h2 className="text-lg font-bold uppercase mb-4">Your accounts</h2>
+        <div className="fc-card p-6 mb-8">
+          <h2 className="fc-heading text-lg mb-4">Your accounts</h2>
           {accounts.length === 0 ? (
-            <p className="text-zinc-600 text-sm">
+            <p className="text-brown text-sm">
               {migrationNotice ? 'Run the migration above, then reload — your accounts will appear here.' : 'No accounts yet.'}
             </p>
           ) : (
@@ -134,11 +131,11 @@ export default function TradingAccountsClient({ session = null }) {
               {accounts.map((a) => (
                 <li
                   key={a.id}
-                  className="flex flex-wrap items-center justify-between gap-3 border-2 border-black px-4 py-3 bg-zinc-50"
+                  className="flex flex-wrap items-center justify-between gap-3 fc-surface px-4 py-3"
                 >
                   <div>
-                    <p className="font-bold">{a.label}</p>
-                    <p className="text-xs text-zinc-600 uppercase">
+                    <p className="font-semibold text-charcoal">{a.label}</p>
+                    <p className="text-xs text-muted uppercase">
                       {KINDS.find((k) => k.id === a.kind)?.label || a.kind} · Starting balance $
                       {Number(a.starting_balance).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
@@ -149,7 +146,7 @@ export default function TradingAccountsClient({ session = null }) {
                   <button
                     type="button"
                     onClick={() => handleDelete(a.id)}
-                    className="text-xs font-bold uppercase px-3 py-1 border-2 border-black bg-white hover:bg-red-50"
+                    className="fc-btn fc-btn-danger fc-btn-sm"
                   >
                     Delete
                   </button>
@@ -159,28 +156,28 @@ export default function TradingAccountsClient({ session = null }) {
           )}
         </div>
 
-        <div className={`border-4 border-black bg-white p-6 shadow-brutal-xl ${migrationNotice ? 'opacity-60 pointer-events-none' : ''}`}>
-          <h2 className="text-lg font-bold uppercase mb-4">Add account</h2>
+        <div className={`fc-card p-6 ${migrationNotice ? 'opacity-60 pointer-events-none' : ''}`}>
+          <h2 className="fc-heading text-lg mb-4">Add account</h2>
           {migrationNotice && (
-            <p className="mb-4 text-xs font-bold uppercase text-zinc-500">Unavailable until the database migration is applied.</p>
+            <p className="mb-4 text-xs font-semibold uppercase text-muted">Unavailable until the database migration is applied.</p>
           )}
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase mb-1">Label</label>
+              <label className="fc-label">Label</label>
               <input
                 value={form.label}
                 onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
                 placeholder="e.g. Apex 50k eval"
-                className="w-full px-3 py-2 border-2 border-black bg-white"
+                className="fc-input"
                 maxLength={80}
               />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase mb-1">Type</label>
+              <label className="fc-label">Type</label>
               <select
                 value={form.kind}
                 onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}
-                className="w-full px-3 py-2 border-2 border-black bg-white"
+                className="fc-input"
               >
                 {KINDS.map((k) => (
                   <option key={k.id} value={k.id}>
@@ -190,20 +187,20 @@ export default function TradingAccountsClient({ session = null }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase mb-1">Starting balance (chart baseline)</label>
+              <label className="fc-label">Starting balance (chart baseline)</label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 value={form.startingBalance}
                 onChange={(e) => setForm((f) => ({ ...f, startingBalance: e.target.value }))}
-                className="w-full px-3 py-2 border-2 border-black bg-white"
+                className="fc-input"
               />
             </div>
             <button
               type="submit"
               disabled={creating || !form.label.trim() || !!migrationNotice}
-              className="px-6 py-3 border-4 border-black bg-orange-600 text-white font-bold hover:bg-orange-500 shadow-brutal-md disabled:opacity-50"
+              className="fc-btn fc-btn-primary"
             >
               {creating ? 'Adding…' : 'Add account'}
             </button>

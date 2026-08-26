@@ -58,25 +58,25 @@ export default function TradingCalendar({ dailyContribution = [] }) {
   return (
     <div className="w-full max-w-full">
       <div className="overflow-x-auto [-webkit-overflow-scrolling:touch] sm:overflow-visible">
-        <div className="min-w-[300px] border-4 border-black bg-white shadow-brutal-xl sm:min-w-0">
-          <div className="flex items-center justify-between gap-2 border-b-4 border-black bg-white px-2 py-3 sm:gap-4 sm:px-4 sm:py-4">
+        <div className="min-w-[300px] fc-card overflow-hidden sm:min-w-0">
+          <div className="flex items-center justify-between gap-2 fc-surface px-2 py-3 sm:gap-4 sm:px-4 sm:py-4">
             <button
               type="button"
               onClick={() => setCursorMonth((d) => subMonths(d, 1))}
-              className="flex h-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center border-2 border-black bg-white text-black shadow-brutal-sm hover:bg-zinc-100 active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+              className="flex h-10 min-h-[40px] min-w-[40px] shrink-0 items-center justify-center rounded-full text-charcoal hover:bg-stone transition-colors"
               aria-label="Previous month"
             >
               <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h3 className="min-w-0 flex-1 text-center text-base font-bold tracking-tight text-black sm:text-xl">
+            <h3 className="fc-heading min-w-0 flex-1 text-center text-base sm:text-xl">
               <span className="block truncate">{format(cursorMonth, 'MMMM yyyy')}</span>
             </h3>
             <button
               type="button"
               onClick={() => setCursorMonth((d) => addMonths(d, 1))}
-              className="flex h-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center border-2 border-black bg-white text-black shadow-brutal-sm hover:bg-zinc-100 active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+              className="flex h-10 min-h-[40px] min-w-[40px] shrink-0 items-center justify-center rounded-full text-charcoal hover:bg-stone transition-colors"
               aria-label="Next month"
             >
               <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -85,20 +85,20 @@ export default function TradingCalendar({ dailyContribution = [] }) {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 border-b-4 border-black bg-zinc-50">
+          <div className="grid grid-cols-7 shadow-[inset_0_-1px_0_0_var(--stone)]">
             {WEEKDAYS.map((label) => (
               <div
                 key={label}
-                className="border-r-2 border-black py-2 text-center text-[10px] font-bold uppercase tracking-wide text-black last:border-r-0 sm:text-xs"
+                className="py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted sm:text-xs"
               >
                 {label}
               </div>
             ))}
           </div>
 
-          <div className="divide-y-2 divide-black">
+          <div>
             {weeks.map((week, wi) => (
-              <div key={wi} className="grid grid-cols-7 divide-x-2 divide-black">
+              <div key={wi} className="grid grid-cols-7">
                 {week.map((day) => {
                   const key = format(day, 'yyyy-MM-dd')
                   const stats = byDate.get(key)
@@ -112,15 +112,15 @@ export default function TradingCalendar({ dailyContribution = [] }) {
                     <div
                       key={key}
                       className={[
-                        'relative flex min-h-[76px] flex-col sm:min-h-[104px]',
-                        !inMonth ? 'bg-zinc-100' : 'bg-white',
-                        isToday ? 'ring-2 ring-orange-600 ring-inset z-[1]' : '',
+                        'relative flex min-h-[76px] flex-col shadow-[inset_-1px_-1px_0_0_var(--stone)] sm:min-h-[104px]',
+                        !inMonth ? 'bg-[var(--stone)]/40' : 'bg-white',
+                        isToday ? 'shadow-[inset_0_0_0_2px_#ff3e00]' : '',
                       ].join(' ')}
                     >
                       <span
                         className={[
-                          'absolute right-1 top-1 text-[10px] font-bold tabular-nums sm:right-2 sm:top-1.5 sm:text-xs',
-                          inMonth ? 'text-black' : 'text-zinc-400',
+                          'absolute right-1 top-1 text-[10px] font-semibold tabular-nums sm:right-2 sm:top-1.5 sm:text-xs',
+                          inMonth ? 'text-charcoal' : 'text-muted',
                         ].join(' ')}
                       >
                         {format(day, 'd')}
@@ -129,22 +129,22 @@ export default function TradingCalendar({ dailyContribution = [] }) {
                       {stats && stats.trades > 0 && (
                         <div
                           className={[
-                            'mt-5 flex flex-1 flex-col justify-end gap-0.5 pl-1.5 pr-0.5 pb-1.5 sm:mt-7 sm:gap-1 sm:pl-2 sm:pr-1 sm:pb-2',
+                            'mt-5 flex flex-1 flex-col justify-end gap-0.5 pl-1.5 pr-0.5 pb-1.5 sm:mt-7 sm:gap-1 sm:pl-2 sm:pr-1 sm:pb-2 border-l-4',
                             profitable
-                              ? 'border-l-4 border-green-600'
+                              ? 'border-[#00ca48]'
                               : lossDay
-                                ? 'border-l-4 border-red-600'
-                                : 'border-l-4 border-zinc-400',
+                                ? 'border-[#ff2b3a]'
+                                : 'border-[var(--stone-border)]',
                           ].join(' ')}
                         >
-                          <p className="text-[9px] leading-tight text-zinc-600 sm:text-xs">
+                          <p className="text-[9px] leading-tight text-muted sm:text-xs">
                             <span className="font-normal">Trades </span>
-                            <span className="font-bold text-black">{stats.trades}</span>
+                            <span className="font-semibold text-charcoal">{stats.trades}</span>
                           </p>
                           <p
                             className={[
-                              'break-words text-[9px] font-bold leading-snug tabular-nums sm:text-xs',
-                              profitable ? 'text-green-700' : lossDay ? 'text-red-700' : 'text-zinc-700',
+                              'break-words text-[9px] font-semibold leading-snug tabular-nums sm:text-xs',
+                              profitable ? 'fc-text-pos' : lossDay ? 'fc-text-neg' : 'text-brown',
                             ].join(' ')}
                           >
                             {formatMoney(pnl)}

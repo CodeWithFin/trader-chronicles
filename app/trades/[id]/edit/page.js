@@ -82,7 +82,7 @@ export default function EditTradeForm() {
         }
 
         const trade = await response.json()
-        
+
         // Pre-populate form with trade data (using corrected P&L)
         const correctedPnl = getCorrectedPnl(trade)
         const startDateTime = new Date(trade.date_time)
@@ -121,7 +121,7 @@ export default function EditTradeForm() {
         ...prev,
         [name]: value
       }
-      
+
       // Auto-adjust P&L sign based on Win/Loss selection
       if (name === 'result') {
         const pnlValue = parseFloat(prev.pnlAbsolute)
@@ -133,7 +133,7 @@ export default function EditTradeForm() {
           }
         }
       }
-      
+
       // Auto-adjust Win/Loss based on P&L sign
       if (name === 'pnlAbsolute') {
         const pnlValue = parseFloat(value)
@@ -145,7 +145,7 @@ export default function EditTradeForm() {
           }
         }
       }
-      
+
       return updated
     })
   }
@@ -246,8 +246,8 @@ export default function EditTradeForm() {
       <>
         <Navbar />
         <div className="mx-auto min-w-0 max-w-2xl px-4 py-8 md:py-16">
-          <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-brutal-2xl">
-            <p className="text-center">{checkingAuth ? 'Checking authentication...' : 'Loading trade...'}</p>
+          <div className="min-w-0 max-w-full fc-card p-4 sm:p-6 md:p-12">
+            <p className="text-center text-brown">{checkingAuth ? 'Checking authentication...' : 'Loading trade...'}</p>
           </div>
         </div>
       </>
@@ -258,25 +258,20 @@ export default function EditTradeForm() {
     <>
       <Navbar />
       <div className="mx-auto min-w-0 max-w-2xl px-4 py-8 md:py-16">
-        <div className="min-w-0 max-w-full border-4 border-black bg-white p-4 sm:p-6 md:p-12 shadow-brutal-2xl">
-          <h1 className="text-3xl font-bold tracking-tight uppercase mb-2 sm:text-4xl md:text-5xl">Edit Trade</h1>
-          <div className="w-full h-1 bg-black mb-8"></div>
+        <div className="min-w-0 max-w-full fc-card p-4 sm:p-6 md:p-12">
+          <h1 className="fc-heading-lg text-3xl sm:text-4xl md:text-5xl mb-8">Edit Trade</h1>
 
-          {error && (
-            <div className="mb-6 p-4 border-2 border-black bg-red-50 text-red-900">
-              {error}
-            </div>
-          )}
+          {error && <div className="fc-banner fc-banner-error mb-6">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-bold mb-2 uppercase">Trading account</label>
+              <label className="fc-label">Trading account</label>
               <select
                 name="accountId"
                 value={formData.accountId}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                className="fc-input"
               >
                 {accounts.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -288,18 +283,18 @@ export default function EditTradeForm() {
 
             {/* Trade Identification */}
             <div>
-              <h2 className="text-xl font-bold mb-4 uppercase">Trade Identification</h2>
+              <h2 className="fc-heading text-xl mb-4">Trade Identification</h2>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold mb-2 uppercase">Start Date & Time</label>
+                    <label className="fc-label">Start Date &amp; Time</label>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2 [&>*]:min-w-0">
                       <div className="min-w-0">
                         <DatePicker
                           selected={formData.startDate}
                           onChange={handleStartDateChange}
                           dateFormat="MMM d, yyyy"
-                          className="w-full min-w-0 max-w-full px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
+                          className="fc-input min-w-0 max-w-full"
                         />
                       </div>
                       <div className="min-w-0">
@@ -307,21 +302,21 @@ export default function EditTradeForm() {
                           type="time"
                           value={formData.startTime}
                           onChange={handleStartTimeChange}
-                          className="w-full max-w-full min-w-0 px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
+                          className="fc-input max-w-full min-w-0"
                         />
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold mb-2 uppercase">End Date & Time</label>
+                    <label className="fc-label">End Date &amp; Time</label>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2 [&>*]:min-w-0">
                       <div className="min-w-0">
                         <DatePicker
                           selected={formData.endDate}
                           onChange={handleEndDateChange}
                           dateFormat="MMM d, yyyy"
-                          className="w-full min-w-0 max-w-full px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
+                          className="fc-input min-w-0 max-w-full"
                         />
                       </div>
                       <div className="min-w-0">
@@ -329,7 +324,7 @@ export default function EditTradeForm() {
                           type="time"
                           value={formData.endTime}
                           onChange={handleEndTimeChange}
-                          className="w-full max-w-full min-w-0 px-3 py-3 text-base border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600 sm:px-4"
+                          className="fc-input max-w-full min-w-0"
                         />
                       </div>
                     </div>
@@ -337,7 +332,7 @@ export default function EditTradeForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase">Asset/Symbol</label>
+                  <label className="fc-label">Asset/Symbol</label>
                   <input
                     type="text"
                     name="assetPair"
@@ -345,7 +340,7 @@ export default function EditTradeForm() {
                     onChange={handleChange}
                     required
                     placeholder="e.g., AAPL, EUR/USD, Gold"
-                    className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                    className="fc-input"
                   />
                 </div>
               </div>
@@ -353,16 +348,16 @@ export default function EditTradeForm() {
 
             {/* Execution Details */}
             <div>
-              <h2 className="text-xl font-bold mb-4 uppercase">Execution Details</h2>
+              <h2 className="fc-heading text-xl mb-4">Execution Details</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase">Direction</label>
+                  <label className="fc-label">Direction</label>
                   <select
                     name="direction"
                     value={formData.direction}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                    className="fc-input"
                   >
                     <option value="Long">Long (Buy)</option>
                     <option value="Short">Short (Sell)</option>
@@ -371,7 +366,7 @@ export default function EditTradeForm() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold mb-2 uppercase">Entry Price</label>
+                    <label className="fc-label">Entry Price</label>
                     <input
                       type="number"
                       name="entryPrice"
@@ -381,12 +376,12 @@ export default function EditTradeForm() {
                       min="0"
                       required
                       placeholder="0.00"
-                      className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                      className="fc-input"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold mb-2 uppercase">Exit Price</label>
+                    <label className="fc-label">Exit Price</label>
                     <input
                       type="number"
                       name="exitPrice"
@@ -396,7 +391,7 @@ export default function EditTradeForm() {
                       min="0"
                       required
                       placeholder="0.00"
-                      className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                      className="fc-input"
                     />
                   </div>
                 </div>
@@ -405,10 +400,10 @@ export default function EditTradeForm() {
 
             {/* Outcome */}
             <div>
-              <h2 className="text-xl font-bold mb-4 uppercase">Outcome</h2>
+              <h2 className="fc-heading text-xl mb-4">Outcome</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase">P&L (Profit/Loss)</label>
+                  <label className="fc-label">P&amp;L (Profit/Loss)</label>
                   <input
                     type="number"
                     name="pnlAbsolute"
@@ -417,23 +412,23 @@ export default function EditTradeForm() {
                     step="0.01"
                     required
                     placeholder="0.00"
-                    className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                    className="fc-input"
                   />
-                  <p className="text-xs text-gray-600 mt-1">
-                    {formData.result === 'Win' 
-                      ? 'Enter positive value for profit (will auto-adjust if negative)' 
+                  <p className="text-xs text-muted mt-1">
+                    {formData.result === 'Win'
+                      ? 'Enter positive value for profit (will auto-adjust if negative)'
                       : 'Enter negative value for loss (will auto-adjust if positive)'}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase">Win/Loss</label>
+                  <label className="fc-label">Win/Loss</label>
                   <select
                     name="result"
                     value={formData.result}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border-2 border-black bg-white focus:outline-none focus:ring-2 focus:ring-orange-600"
+                    className="fc-input"
                   >
                     <option value="Win">Win</option>
                     <option value="Loss">Loss</option>
@@ -442,18 +437,15 @@ export default function EditTradeForm() {
               </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-3 pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-4 border-4 border-black bg-orange-600 text-white text-lg font-bold hover:bg-orange-500 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fc-btn fc-btn-primary flex-1 text-base py-3.5"
               >
                 {loading ? 'Updating...' : 'Update Trade'}
               </button>
-              <Link
-                href="/trades"
-                className="px-6 py-4 border-4 border-black bg-white text-lg font-bold hover:bg-zinc-100 transition-colors shadow-brutal-md active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-              >
+              <Link href="/trades" className="fc-btn fc-btn-secondary text-base py-3.5">
                 Cancel
               </Link>
             </div>
@@ -463,4 +455,3 @@ export default function EditTradeForm() {
     </>
   )
 }
-

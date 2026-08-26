@@ -25,12 +25,12 @@ export default function LeaderboardClient({ initialEntries = [], session = null 
   );
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-canvas">
       <Navbar initialSession={session} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2 border-b-4 border-[#ea580c] pb-4 inline-flex items-center gap-3">
-            <svg className="w-10 h-10 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden>
+          <h1 className="fc-heading-lg text-4xl md:text-5xl mb-2 inline-flex items-center gap-3">
+            <svg className="w-9 h-9 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden>
               <path d="M0 0h24v24H0z" fill="none" />
               <path
                 fill="currentColor"
@@ -39,7 +39,7 @@ export default function LeaderboardClient({ initialEntries = [], session = null 
             </svg>
             Leaderboard
           </h1>
-          <p className="text-zinc-600 mt-4">
+          <p className="text-brown mt-2">
             See how members rank by total profit and loss. Open a profile for more detail.
           </p>
         </div>
@@ -50,12 +50,12 @@ export default function LeaderboardClient({ initialEntries = [], session = null 
             placeholder="Search by username..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-white border-2 border-black rounded-lg px-4 py-2 text-black placeholder-zinc-500 focus:outline-none focus:border-[#ea580c]"
+            className="fc-input flex-1"
           />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="bg-white border-2 border-black rounded-lg px-4 py-2 text-black focus:outline-none focus:border-[#ea580c]"
+            className="fc-input md:w-auto"
           >
             <option value="pnl">Sort by P&amp;L</option>
             <option value="trades">Sort by Trades</option>
@@ -66,28 +66,26 @@ export default function LeaderboardClient({ initialEntries = [], session = null 
 
         {filteredEntries.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-zinc-600 text-lg">No matches.</p>
+            <p className="text-brown text-lg">No matches.</p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-white border-2 border-black rounded-lg p-6">
-                <p className="text-zinc-600 text-sm mb-2">On leaderboard</p>
-                <p className="text-3xl font-bold text-[#ea580c]">{entries.length}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+              <div className="fc-card p-6">
+                <p className="text-muted text-sm mb-2">On leaderboard</p>
+                <p className="text-3xl font-semibold text-ink">{entries.length}</p>
               </div>
-              <div className="bg-white border-2 border-black rounded-lg p-6">
-                <p className="text-zinc-600 text-sm mb-2">Total Trades Logged</p>
-                <p className="text-3xl font-bold text-[#ea580c]">
+              <div className="fc-card p-6">
+                <p className="text-muted text-sm mb-2">Total Trades Logged</p>
+                <p className="text-3xl font-semibold text-ink">
                   {entries.reduce((sum, t) => sum + t.totalTrades, 0)}
                 </p>
               </div>
-              <div className="bg-white border-2 border-black rounded-lg p-6">
-                <p className="text-zinc-600 text-sm mb-2">Community Net P&amp;L</p>
+              <div className="fc-card p-6">
+                <p className="text-muted text-sm mb-2">Community Net P&amp;L</p>
                 <p
-                  className={`text-3xl font-bold ${
-                    entries.reduce((sum, t) => sum + t.totalPnl, 0) >= 0
-                      ? 'text-green-600'
-                      : 'text-red-600'
+                  className={`text-3xl font-semibold ${
+                    entries.reduce((sum, t) => sum + t.totalPnl, 0) >= 0 ? 'fc-text-pos' : 'fc-text-neg'
                   }`}
                 >
                   {formatPnlCurrency(entries.reduce((sum, t) => sum + t.totalPnl, 0))}
@@ -95,16 +93,16 @@ export default function LeaderboardClient({ initialEntries = [], session = null 
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredEntries.map((entry, index) => {
-                const pnlColor = entry.totalPnl >= 0 ? 'text-green-600' : 'text-red-600';
+                const pnlClass = entry.totalPnl >= 0 ? 'fc-text-pos' : 'fc-text-neg';
 
                 return (
                   <div
                     key={entry.id}
-                    className="bg-white border-2 border-black rounded-lg p-6 hover:border-[#ea580c] transition-colors group flex flex-col"
+                    className="fc-card fc-card-hover p-6 flex flex-col"
                   >
-                    <div className="mb-4 pb-4 border-b-2 border-zinc-200">
+                    <div className="mb-4 pb-4 shadow-[inset_0_-1px_0_0_var(--stone)]">
                       <div className="flex items-center gap-2 min-h-[2.25rem]">
                         {index === 0 && (
                           <Image
@@ -115,33 +113,33 @@ export default function LeaderboardClient({ initialEntries = [], session = null 
                             className="h-9 w-9 shrink-0 object-contain"
                           />
                         )}
-                        <h3 className="text-xl font-bold text-black group-hover:text-[#ea580c] transition-colors min-w-0">
+                        <h3 className="fc-heading text-xl min-w-0">
                           {entry.username}
                         </h3>
                       </div>
-                      <p className="text-zinc-500 text-xs mt-1">
+                      <p className="text-muted text-xs mt-1">
                         Joined {formatDistanceToNow(new Date(entry.joinedAt), { addSuffix: true })}
                       </p>
                     </div>
 
                     <div className="space-y-4 mb-6">
                       <div>
-                        <p className="text-zinc-500 text-xs uppercase mb-1">Net P&amp;L</p>
-                        <p className={`text-2xl font-bold ${pnlColor}`}>
+                        <p className="text-muted text-xs uppercase mb-1">Net P&amp;L</p>
+                        <p className={`text-2xl font-semibold ${pnlClass}`}>
                           {formatPnlCurrency(entry.totalPnl)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-zinc-500 text-xs uppercase mb-1">Total Trades</p>
-                        <p className="text-2xl font-bold text-[#ea580c]">{entry.totalTrades}</p>
+                        <p className="text-muted text-xs uppercase mb-1">Total Trades</p>
+                        <p className="text-2xl font-semibold text-ink">{entry.totalTrades}</p>
                       </div>
                       <div>
-                        <p className="text-zinc-500 text-xs uppercase mb-1">Win Rate</p>
+                        <p className="text-muted text-xs uppercase mb-1">Win Rate</p>
                         <div className="flex items-center gap-3">
-                          <p className="text-2xl font-bold text-black">{entry.winRate}%</p>
-                          <div className="flex-1 bg-zinc-200 rounded-full h-2 overflow-hidden">
+                          <p className="text-2xl font-semibold text-ink">{entry.winRate}%</p>
+                          <div className="flex-1 bg-stone rounded-full h-2 overflow-hidden">
                             <div
-                              className="bg-[#ea580c] h-full transition-all"
+                              className="bg-[#ff3e00] h-full transition-all"
                               style={{ width: `${entry.winRate}%` }}
                             ></div>
                           </div>
@@ -149,15 +147,15 @@ export default function LeaderboardClient({ initialEntries = [], session = null 
                       </div>
                       {entry.bestAssetPair && (
                         <div>
-                          <p className="text-zinc-500 text-xs uppercase mb-1">Best Asset Pair</p>
-                          <p className="text-lg font-semibold text-black">{entry.bestAssetPair}</p>
+                          <p className="text-muted text-xs uppercase mb-1">Best Asset Pair</p>
+                          <p className="text-lg font-semibold text-charcoal">{entry.bestAssetPair}</p>
                         </div>
                       )}
                     </div>
 
                     <Link
                       href={`/leaderboard/${entry.id}`}
-                      className="block w-full mt-auto bg-[#ea580c] text-white font-bold py-2 px-4 rounded border-2 border-[#ea580c] hover:bg-zinc-950 transition-colors text-center"
+                      className="fc-btn fc-btn-primary w-full mt-auto"
                     >
                       View Profile
                     </Link>
@@ -170,7 +168,7 @@ export default function LeaderboardClient({ initialEntries = [], session = null 
 
         {entries.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-zinc-600 text-lg">
+            <p className="text-brown text-lg">
               The leaderboard is empty. Be the first to log your trades!
             </p>
           </div>
