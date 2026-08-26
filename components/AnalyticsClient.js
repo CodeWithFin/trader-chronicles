@@ -79,7 +79,7 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
       <>
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="text-center text-xl font-bold">Loading analytics...</div>
+          <div className="text-center text-xl font-semibold text-brown">Loading analytics...</div>
         </div>
       </>
     )
@@ -90,7 +90,7 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
       <>
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="border-4 border-black bg-red-50 p-6 text-red-900">
+          <div className="fc-banner fc-banner-error">
             {error || 'No analytics data available'}
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
       <>
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="text-center text-xl font-bold">Loading analytics...</div>
+          <div className="text-center text-xl font-semibold text-brown">Loading analytics...</div>
         </div>
       </>
     )
@@ -124,11 +124,10 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
     winRate: parseFloat((rate || 0).toFixed(2))
   }))
 
-  const MetricCard = ({ title, value, subtitle, color = 'black' }) => (
-    <div className="border-2 border-black bg-white p-6 shadow-brutal-md">
-      <p className="text-sm font-bold text-zinc-600 uppercase mb-2">{title}</p>
-      <p className={`text-4xl font-bold ${color}`}>{value}</p>
-      {subtitle && <p className="text-sm text-zinc-600 mt-2">{subtitle}</p>}
+  const MetricCard = ({ title, value, valueClass = 'text-ink' }) => (
+    <div className="fc-card p-6">
+      <p className="text-xs font-semibold text-muted uppercase mb-2">{title}</p>
+      <p className={`text-3xl font-semibold ${valueClass}`}>{value}</p>
     </div>
   )
 
@@ -148,23 +147,20 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-16">
         <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight uppercase mb-2 inline-flex items-center gap-3">
-              <svg className="w-10 h-10 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden>
-                <path d="M0 0h24v24H0z" fill="none" />
-                <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
-                  <path d="M7 18v-2m5 2v-3m5 3v-5M2.5 12c0-4.478 0-6.718 1.391-8.109S7.521 2.5 12 2.5c4.478 0 6.718 0 8.109 1.391S21.5 7.521 21.5 12c0 4.478 0 6.718-1.391 8.109S16.479 21.5 12 21.5c-4.478 0-6.718 0-8.109-1.391S2.5 16.479 2.5 12" />
-                  <path d="M5.992 11.486c2.155.072 7.042-.253 9.822-4.665m-1.822-.533l1.876-.302c.228-.029.564.152.647.367l.495 1.638" />
-                </g>
-              </svg>
-              Analytics Dashboard
-            </h1>
-            <div className="w-full h-1 bg-black"></div>
-          </div>
+          <h1 className="fc-heading-lg text-4xl md:text-5xl inline-flex items-center gap-3">
+            <svg className="w-9 h-9 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden>
+              <path d="M0 0h24v24H0z" fill="none" />
+              <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+                <path d="M7 18v-2m5 2v-3m5 3v-5M2.5 12c0-4.478 0-6.718 1.391-8.109S7.521 2.5 12 2.5c4.478 0 6.718 0 8.109 1.391S21.5 7.521 21.5 12c0 4.478 0 6.718-1.391 8.109S16.479 21.5 12 21.5c-4.478 0-6.718 0-8.109-1.391S2.5 16.479 2.5 12" />
+                <path d="M5.992 11.486c2.155.072 7.042-.253 9.822-4.665m-1.822-.533l1.876-.302c.228-.029.564.152.647.367l.495 1.638" />
+              </g>
+            </svg>
+            Analytics Dashboard
+          </h1>
           <button
             onClick={refreshAnalytics}
             disabled={isRefreshing}
-            className="inline-flex items-center gap-2 px-4 py-2 border-2 border-black bg-white text-sm font-bold hover:bg-zinc-100 transition-colors shadow-brutal-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="fc-btn fc-btn-secondary fc-btn-sm"
             title="Refresh analytics data"
           >
             <svg
@@ -184,22 +180,22 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
-        
+
         {error && analytics && (
-          <div className="mb-6 p-4 border-2 border-black bg-yellow-50 text-yellow-900">
+          <div className="fc-banner fc-banner-warn mb-6">
             {error} (showing cached data)
           </div>
         )}
 
-        <div className="mb-8 flex flex-col gap-2 border-4 border-black bg-white p-4 shadow-brutal-lg md:flex-row md:items-center md:justify-between">
-          <label htmlFor="analytics-account" className="text-sm font-bold uppercase">
+        <div className="mb-8 flex flex-col gap-3 fc-card p-4 md:flex-row md:items-center md:justify-between">
+          <label htmlFor="analytics-account" className="fc-label mb-0">
             Analytics scope
           </label>
           <select
             id="analytics-account"
             value={accountFilter}
             onChange={(e) => setAccountFilter(e.target.value)}
-            className="w-full max-w-md border-2 border-black bg-white px-3 py-2 text-sm font-semibold md:w-auto"
+            className="fc-input fc-input-sm w-full max-w-md md:w-auto"
           >
             <option value="">All trading accounts (combined)</option>
             {accounts.map((a) => (
@@ -211,50 +207,40 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <MetricCard
-            title="Total Trades"
-            value={totalTrades}
-            subtitle="All trade entries"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <MetricCard title="Total Trades" value={totalTrades} />
           <MetricCard
             title="Win Rate"
             value={`${(winRate || 0).toFixed(2)}%`}
-            subtitle={`${totalTrades > 0 ? (((winRate || 0) / 100) * totalTrades).toFixed(0) : 0} winning trades`}
-            color="text-green-600"
+            valueClass="fc-text-pos"
           />
           <MetricCard
             title="Average P&L"
             value={`${(analytics.averagePnl || 0) >= 0 ? '+' : ''}$${(analytics.averagePnl || 0).toFixed(2)}`}
-            subtitle={`Win: $${(analytics.averageWinPnl || 0).toFixed(2)} | Loss: $${(analytics.averageLossPnl || 0).toFixed(2)}`}
-            color={(analytics.averagePnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'}
+            valueClass={(analytics.averagePnl || 0) >= 0 ? 'fc-text-pos' : 'fc-text-neg'}
           />
           <MetricCard
             title="Expectancy"
             value={`${(expectancy || 0) >= 0 ? '+' : ''}$${(expectancy || 0).toFixed(2)}`}
-            subtitle="Expected value per trade"
-            color={(expectancy || 0) >= 0 ? 'text-green-600' : 'text-red-600'}
+            valueClass={(expectancy || 0) >= 0 ? 'fc-text-pos' : 'fc-text-neg'}
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
           <MetricCard
             title="Largest Win"
             value={`+$${(analytics.largestWinPnl || 0).toFixed(2)}`}
-            subtitle="Best performing trade"
-            color="text-green-600"
+            valueClass="fc-text-pos"
           />
           <MetricCard
             title="Largest Loss"
             value={`$${(analytics.largestLossPnl || 0).toFixed(2)}`}
-            subtitle="Worst performing trade"
-            color="text-red-600"
+            valueClass="fc-text-neg"
           />
           <MetricCard
             title="Profit Factor"
             value={profitFactor === Infinity || profitFactor === null ? '∞' : (profitFactor || 0).toFixed(2)}
-            subtitle="Total wins / Total losses"
-            color={(profitFactor || 0) >= 1 ? 'text-green-600' : 'text-red-600'}
+            valueClass={(profitFactor || 0) >= 1 ? 'fc-text-pos' : 'fc-text-neg'}
           />
         </div>
 
@@ -264,11 +250,11 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
           scopeLabel={selectedAccountLabel}
         />
 
-        <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl mb-12">
+        <div className="fc-card p-6 md:p-12 mb-10">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold uppercase">Trading Calendar</h2>
-            <p className="text-sm text-zinc-600 mt-1">
-              Trades and net P&amp;L per day — green/red bar by result
+            <h2 className="fc-heading text-2xl">Trading Calendar</h2>
+            <p className="text-sm text-brown mt-1">
+              Trades and net P&amp;L per day
               {selectedAccountLabel ? ` · ${selectedAccountLabel}` : ''}
             </p>
           </div>
@@ -276,34 +262,26 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
         </div>
 
         {/* Charts */}
-        <div className="space-y-12">
+        <div className="space-y-10">
           {/* Contribution Graph */}
-          <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl">
+          <div className="fc-card p-6 md:p-12">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h2 className="text-2xl font-bold uppercase">Trading Activity</h2>
-                <p className="text-sm text-zinc-600 mt-1">Daily win/loss overview</p>
+                <h2 className="fc-heading text-2xl">Trading Activity</h2>
+                <p className="text-sm text-brown mt-1">Daily win/loss overview</p>
               </div>
               {/* Mode Toggle */}
               <div className="flex gap-2 items-center">
                 <button
                   onClick={() => setGraphMode('activity')}
-                  className={`px-3 py-1 text-xs font-bold border-2 border-black transition-all ${
-                    graphMode === 'activity' 
-                      ? 'bg-zinc-200 text-black' 
-                      : 'bg-white text-zinc-600 hover:bg-zinc-50'
-                  }`}
+                  className={`fc-btn fc-btn-sm ${graphMode === 'activity' ? 'fc-btn-primary' : 'fc-btn-secondary'}`}
                   aria-label="Activity mode"
                 >
                   Activity
                 </button>
                 <button
                   onClick={() => setGraphMode('pnl')}
-                  className={`px-3 py-1 text-xs font-bold border-2 border-black transition-all ${
-                    graphMode === 'pnl' 
-                      ? 'bg-zinc-200 text-black' 
-                      : 'bg-white text-zinc-600 hover:bg-zinc-50'
-                  }`}
+                  className={`fc-btn fc-btn-sm ${graphMode === 'pnl' ? 'fc-btn-primary' : 'fc-btn-secondary'}`}
                   aria-label="P&L mode"
                 >
                   P&L
@@ -322,36 +300,36 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
 
           {/* Win Rate by Tag */}
           {tagData.length > 0 && (
-            <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl">
-              <h2 className="text-2xl font-bold mb-6 uppercase">Win Rate by Setup Tag</h2>
-              <p className="text-sm text-zinc-600 mb-6">Performance by trade setup characteristics</p>
+            <div className="fc-card p-6 md:p-12">
+              <h2 className="fc-heading text-2xl mb-2">Win Rate by Setup Tag</h2>
+              <p className="text-sm text-brown mb-6">Performance by trade setup characteristics</p>
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={tagData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={palette.grid} />
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: palette.tick, fontSize: 12, fontFamily: 'JetBrains Mono' }}
+                    tick={{ fill: palette.tick, fontSize: 12, fontFamily: 'Inter' }}
                     stroke={palette.axis}
                     angle={-45}
                     textAnchor="end"
                     height={100}
                   />
                   <YAxis
-                    tick={{ fill: palette.tick, fontSize: 12, fontFamily: 'JetBrains Mono' }}
+                    tick={{ fill: palette.tick, fontSize: 12, fontFamily: 'Inter' }}
                     stroke={palette.axis}
                     domain={[0, 100]}
                   />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: palette.tooltipBg,
-                      border: `2px solid ${palette.tooltipBorder}`,
-                      borderRadius: '0',
-                      fontFamily: 'JetBrains Mono',
+                      border: `1px solid ${palette.tooltipBorder}`,
+                      borderRadius: '10px',
+                      fontFamily: 'Inter',
                       color: palette.tooltipLabel,
                     }}
                     formatter={(value) => `${value}%`}
                   />
-                  <Bar dataKey="winRate" fill="#ea580c" stroke={palette.axis} strokeWidth={2} />
+                  <Bar dataKey="winRate" fill={palette.accent} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -361,5 +339,3 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
     </>
   )
 }
-
-
