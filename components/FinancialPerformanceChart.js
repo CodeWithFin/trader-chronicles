@@ -66,14 +66,14 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
       : { step: 'Realized P&L', smooth: 'Running net' }
 
   return (
-    <div className="border-4 border-black bg-white p-6 md:p-12 shadow-brutal-2xl mb-12">
+    <div className="fc-card p-6 md:p-12 mb-10">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-2xl font-bold uppercase tracking-tight text-black">Financial Performance</h2>
+          <h2 className="fc-heading text-2xl">Financial Performance</h2>
           {scopeLabel ? (
-            <p className="mt-2 text-xs font-bold uppercase tracking-wide text-[#ea580c]">Scope: {scopeLabel}</p>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-[#ff3e00]">Scope: {scopeLabel}</p>
           ) : null}
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-brown">
             Realized balance steps at each closed trade; smooth line tracks the same path between closes (journal
             approximation of equity).
           </p>
@@ -91,9 +91,9 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
               max={bounds.max || undefined}
               value={rangeStart}
               onChange={(e) => setRangeStart(e.target.value)}
-              className="rounded-md border-2 border-black bg-white px-3 py-2 text-sm font-medium text-black shadow-brutal-sm focus:border-[#ea580c] focus:outline-none"
+              className="fc-input fc-input-sm"
             />
-            <span className="text-zinc-500">→</span>
+            <span className="text-muted">→</span>
             <label className="sr-only" htmlFor="fp-end">
               End date
             </label>
@@ -104,26 +104,22 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
               max={bounds.max || undefined}
               value={rangeEnd}
               onChange={(e) => setRangeEnd(e.target.value)}
-              className="rounded-md border-2 border-black bg-white px-3 py-2 text-sm font-medium text-black shadow-brutal-sm focus:border-[#ea580c] focus:outline-none"
+              className="fc-input fc-input-sm"
             />
           </div>
 
-          <div className="flex rounded-md border-2 border-black p-0.5 shadow-brutal-sm">
+          <div className="flex gap-1 fc-surface p-1">
             <button
               type="button"
               onClick={() => setView('balance')}
-              className={`rounded px-4 py-2 text-xs font-bold uppercase transition-colors ${
-                view === 'balance' ? 'bg-[#ea580c] text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'
-              }`}
+              className={`fc-btn fc-btn-sm ${view === 'balance' ? 'fc-btn-primary' : 'fc-btn-ghost'}`}
             >
               Balance
             </button>
             <button
               type="button"
               onClick={() => setView('profit')}
-              className={`rounded px-4 py-2 text-xs font-bold uppercase transition-colors ${
-                view === 'profit' ? 'bg-[#ea580c] text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'
-              }`}
+              className={`fc-btn fc-btn-sm ${view === 'profit' ? 'fc-btn-primary' : 'fc-btn-ghost'}`}
             >
               Profit
             </button>
@@ -132,23 +128,23 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
       </div>
 
       {!points.length ? (
-        <div className="rounded-lg border-2 border-zinc-200 bg-zinc-50 py-16 text-center text-zinc-600">
+        <div className="rounded-[10px] fc-surface py-16 text-center text-brown">
           Log trades to see balance and equity over time.
         </div>
       ) : chartData.length < 2 ? (
-        <div className="rounded-lg border-2 border-zinc-200 bg-zinc-50 py-16 text-center text-zinc-600">
+        <div className="rounded-[10px] fc-surface py-16 text-center text-brown">
           No data in this date range.
         </div>
       ) : (
-        <div className="rounded-lg border-2 border-zinc-200 bg-zinc-50 p-4 md:p-6">
-          <div className="mb-2 text-center text-xs font-bold uppercase tracking-wide text-zinc-600">
+        <div className="rounded-[10px] fc-surface p-4 md:p-6">
+          <div className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-brown">
             <span className="inline-flex items-center gap-4">
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full border-2 border-black bg-white" aria-hidden />
+                <span className="h-2.5 w-2.5 rounded-full bg-white shadow-card" aria-hidden />
                 {legendNames.step}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" aria-hidden />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#00ca48]" aria-hidden />
                 {legendNames.smooth}
               </span>
             </span>
@@ -181,13 +177,13 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
                 ]}
                 contentStyle={{
                   backgroundColor: palette.tooltipBg,
-                  border: `2px solid ${palette.tooltipBorder}`,
-                  borderRadius: 0,
-                  fontFamily: 'ui-monospace, monospace',
+                  border: `1px solid ${palette.tooltipBorder}`,
+                  borderRadius: 10,
+                  fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
                   fontSize: 12,
                   color: palette.tooltipLabel,
                 }}
-                labelStyle={{ color: palette.tooltipLabel, fontWeight: 700, marginBottom: 4 }}
+                labelStyle={{ color: palette.tooltipLabel, fontWeight: 600, marginBottom: 4 }}
               />
               <Line
                 type="stepAfter"
@@ -203,16 +199,16 @@ export default function FinancialPerformanceChart({ startingBalance = 10000, poi
                 type="monotone"
                 dataKey="equitySmooth"
                 name="equitySmooth"
-                stroke="#10b981"
+                stroke="#00ca48"
                 strokeWidth={2}
-                dot={{ r: 3, fill: '#10b981', stroke: '#065f46', strokeWidth: 1 }}
+                dot={{ r: 3, fill: '#00ca48', stroke: '#0a7a3d', strokeWidth: 1 }}
                 activeDot={{ r: 5 }}
                 isAnimationActive={false}
               />
             </LineChart>
           </ResponsiveContainer>
 
-          <p className="mt-3 text-center text-[11px] text-zinc-500">
+          <p className="mt-3 text-center text-[11px] text-muted">
             {`Starting notional balance ${fmtMoney(startingBalance)} · Values use closed-trade P&L only.`}
           </p>
         </div>
