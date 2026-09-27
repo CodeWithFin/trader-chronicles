@@ -1,4 +1,7 @@
 -- Rank leaderboard by total profit/loss instead of trade count.
+-- Return type adds total_pnl; drop first because CREATE OR REPLACE cannot change OUT columns.
+
+DROP FUNCTION IF EXISTS public.get_public_trader_stats();
 
 CREATE OR REPLACE FUNCTION public.get_public_trader_stats()
 RETURNS TABLE (

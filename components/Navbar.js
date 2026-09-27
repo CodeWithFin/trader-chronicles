@@ -68,6 +68,15 @@ const NAV_LINKS = [
       </svg>
     ),
   },
+  {
+    href: '/gold-signals',
+    label: 'Gold Signals',
+    icon: (
+      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z" />
+      </svg>
+    ),
+  },
 ]
 
 export default function Navbar({ initialSession = null }) {
