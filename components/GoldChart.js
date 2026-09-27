@@ -21,7 +21,7 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
     let cancelled = false
 
     async function init() {
-      const { createChart, CrosshairMode } = await import('lightweight-charts')
+      const { createChart, CandlestickSeries, CrosshairMode } = await import('lightweight-charts')
       if (cancelled || !containerRef.current) return
 
       const chart = createChart(containerRef.current, {
@@ -47,14 +47,18 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
         },
       })
 
-      const candleSeries = chart.addCandlestickSeries({
+      const seriesOptions = {
         upColor: '#22c55e',
         downColor: '#ef4444',
         borderDownColor: '#ef4444',
         borderUpColor: '#22c55e',
         wickDownColor: '#ef4444',
         wickUpColor: '#22c55e',
-      })
+      }
+
+      const candleSeries = typeof chart.addSeries === 'function' && CandlestickSeries
+        ? chart.addSeries(CandlestickSeries, seriesOptions)
+        : chart.addCandlestickSeries(seriesOptions)
 
       /* ── seed with placeholder historical candles ────────────────── */
       const now = Math.floor(Date.now() / 1000)
