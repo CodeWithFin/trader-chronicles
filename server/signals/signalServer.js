@@ -1,9 +1,9 @@
 /**
  * Signal Scheduler + WebSocket Server
  *
- * – Runs a standalone WebSocket server on port 3002
- * – Retains historical session signals (Asian, London, NY) with WIN/LOSS outcomes
- * – Broadcasts live ticks and session signals
+ * Enforces session scheduling:
+ * – If a session is UPCOMING (market not open yet for that session), it remains empty.
+ * – When a session opens or has completed earlier in the day, high-quality 60+ pips CRT setups are retained.
  *
  * Usage: node server/signals/signalServer.js
  */
@@ -15,11 +15,37 @@ const { generateCRTSignals } = require('./signalEngine')
 const PORT = parseInt(process.env.SIGNAL_WS_PORT, 10) || 3002
 const HOST = '127.0.0.1'
 
-/* ── Retained signals state for past & active sessions ───────────── */
+function getSessionState(sessionId) {
+  const now = new Date()
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000
+  const est = new Date(utc - 5 * 3600000) // EST (UTC-5)
+  const hours = est.getHours()
+  const minutes = est.getMinutes()
+  const currentMinutes = hours * 60 + minutes
+
+  const ranges = {
+    asian: { start: 19 * 60, end: 22 * 60 },
+    london: { start: 4 * 60, end: 9 * 60 },
+    newyork: { start: 9 * 60 + 30, end: 13 * 60 },
+  }
+
+  const range = ranges[sessionId]
+  if (!range) return 'UPCOMING'
+
+  if (currentMinutes >= range.start && currentMinutes < range.end) {
+    return 'ACTIVE'
+  } else if (currentMinutes >= range.end) {
+    return 'CLOSED'
+  } else {
+    return 'UPCOMING'
+  }
+}
+
+/* ── Retained signals state per session ───────────────────────────── */
 const retainedSignals = {
-  asian: generateCRTSignals('asian', true),
-  london: generateCRTSignals('london', true),
-  newyork: generateCRTSignals('newyork', false),
+  asian: getSessionState('asian') !== 'UPCOMING' ? generateCRTSignals('asian', true) : [],
+  london: getSessionState('london') !== 'UPCOMING' ? generateCRTSignals('london', true) : [],
+  newyork: getSessionState('newyork') !== 'UPCOMING' ? generateCRTSignals('newyork', true) : [],
 }
 
 /* ── WebSocket server ────────────────────────────────────────────── */
@@ -30,7 +56,6 @@ console.log(`[SignalServer] WebSocket listening on ws://${HOST}:${PORT}`)
 wss.on('connection', (ws) => {
   console.log('[SignalServer] Client connected')
 
-  // Send initial handshake + full retained signal history
   ws.send(
     JSON.stringify({
       type: 'info',
@@ -39,7 +64,6 @@ wss.on('connection', (ws) => {
     })
   )
 
-  // Immediately push retained signals for each session
   Object.keys(retainedSignals).forEach((session) => {
     ws.send(
       JSON.stringify({
@@ -56,7 +80,6 @@ wss.on('connection', (ws) => {
   })
 })
 
-/* ── Broadcast helper ────────────────────────────────────────────── */
 function broadcast(data) {
   const payload = JSON.stringify(data)
   wss.clients.forEach((client) => {
@@ -137,9 +160,7 @@ console.log('  Asian   → 19:00 EST daily')
 console.log('  London  → 04:00 EST daily')
 console.log('  New York→ 09:30 EST daily')
 
-/* ── Graceful shutdown ───────────────────────────────────────────── */
 process.on('SIGINT', () => {
-  console.log('\n[SignalServer] Shutting down…')
   wss.close(() => process.exit(0))
 })
 
