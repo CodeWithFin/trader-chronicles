@@ -26,15 +26,15 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
 
       const chart = createChart(containerRef.current, {
         width: containerRef.current.clientWidth,
-        height: 420,
+        height: 440,
         layout: {
-          background: { color: '#0e0e10' },
+          background: { color: '#111113' },
           textColor: '#a1a1aa',
           fontFamily: 'var(--font-inter), ui-sans-serif, system-ui, sans-serif',
         },
         grid: {
-          vertLines: { color: 'rgba(255,255,255,0.03)' },
-          horzLines: { color: 'rgba(255,255,255,0.03)' },
+          vertLines: { color: 'rgba(255,255,255,0.04)' },
+          horzLines: { color: 'rgba(255,255,255,0.04)' },
         },
         crosshair: { mode: CrosshairMode.Normal },
         rightPriceScale: {
@@ -48,12 +48,12 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
       })
 
       const seriesOptions = {
-        upColor: '#22c55e',
-        downColor: '#ef4444',
-        borderDownColor: '#ef4444',
-        borderUpColor: '#22c55e',
-        wickDownColor: '#ef4444',
-        wickUpColor: '#22c55e',
+        upColor: '#00c978',
+        downColor: '#ff2b3a',
+        borderDownColor: '#ff2b3a',
+        borderUpColor: '#00c978',
+        wickDownColor: '#ff2b3a',
+        wickUpColor: '#00c978',
       }
 
       const candleSeries = typeof chart.addSeries === 'function' && CandlestickSeries
@@ -130,7 +130,7 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
 
       const entryLine = seriesRef.current.createPriceLine({
         price: sig.entry,
-        color: '#3b82f6',
+        color: '#0086fc',
         lineWidth: 1,
         lineStyle: 0,
         axisLabelVisible: true,
@@ -138,7 +138,7 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
       })
       const slLine = seriesRef.current.createPriceLine({
         price: sig.stopLoss,
-        color: '#ef4444',
+        color: '#ff2b3a',
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
@@ -146,7 +146,7 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
       })
       const tpLine = seriesRef.current.createPriceLine({
         price: sig.takeProfit,
-        color: '#22c55e',
+        color: '#00c978',
         lineWidth: 1,
         lineStyle: 2,
         axisLabelVisible: true,
@@ -158,28 +158,30 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
   }, [signals])
 
   return (
-    <div className="fc-card overflow-hidden" style={{ background: '#0e0e10' }}>
+    <div className="fc-card p-6 space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 pt-4 pb-2">
-        <span
-          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-          style={{ background: 'linear-gradient(135deg, #facc15, #d97706)' }}
-        >
-          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z" />
-          </svg>
-        </span>
-        <div>
-          <h3 className="text-white font-semibold text-sm tracking-tight">XAU / USD</h3>
-          <p className="text-[11px] text-zinc-500">Gold Spot · 1-min</p>
+      <div className="flex items-center justify-between gap-4 pb-3 border-b border-[var(--stone)]">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: '#ffcd6c' }}
+          >
+            <svg className="w-5 h-5 text-ink" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="fc-heading text-xl">XAU / USD</h3>
+            <p className="text-xs text-brown">Gold Spot · 1-Minute Live Candlesticks</p>
+          </div>
         </div>
-        <span className="ml-auto fc-badge text-[10px]" style={{ background: 'rgba(250,204,21,0.12)', color: '#facc15' }}>
-          LIVE
+        <span className="fc-badge fc-badge-win text-xs px-3 py-1 font-semibold">
+          LIVE FEED
         </span>
       </div>
 
       {/* Chart container */}
-      <div ref={containerRef} id="gold-chart-container" className="w-full" />
+      <div ref={containerRef} id="gold-chart-container" className="w-full rounded-lg overflow-hidden" />
     </div>
   )
 }
