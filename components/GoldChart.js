@@ -1,20 +1,28 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+const TIMEFRAMES = [
+  { id: '1m', label: '1m', intervalSeconds: 60, title: '1-Minute' },
+  { id: '5m', label: '5m', intervalSeconds: 300, title: '5-Minute' },
+  { id: '15m', label: '15m', intervalSeconds: 900, title: '15-Minute' },
+  { id: '1h', label: '1h', intervalSeconds: 3600, title: '1-Hour' },
+  { id: '4h', label: '4h', intervalSeconds: 14400, title: '4-Hour' },
+  { id: '1d', label: '1D', intervalSeconds: 86400, title: 'Daily' },
+]
 
 /**
- * GoldChart — XAU/USD candlestick chart powered by lightweight-charts.
- *
- * Props:
- *   wsRef        – shared React ref to the WebSocket instance (created by the parent page)
- *   signals      – array of signal objects to render price-line overlays
- *   onChartReady – optional callback when the chart is first mounted
+ * GoldChart — XAU/USD candlestick chart with interactive timeframe selector.
  */
 export default function GoldChart({ wsRef, signals = [], onChartReady }) {
   const containerRef = useRef(null)
   const chartRef = useRef(null)
   const seriesRef = useRef(null)
   const priceLinesRef = useRef([])
+
+  const [timeframe, setTimeframe] = useState('1m')
+
+  const activeTfObj = TIMEFRAMES.find((tf) => tf.id === timeframe) || TIMEFRAMES[0]
 
   /* ── initialise chart ─────────────────────────────────────────────── */
   useEffect(() => {
@@ -56,13 +64,13 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
         wickUpColor: '#00c978',
       }
 
-      const candleSeries = typeof chart.addSeries === 'function' && CandlestickSeries
-        ? chart.addSeries(CandlestickSeries, seriesOptions)
-        : chart.addCandlestickSeries(seriesOptions)
+      const candleSeries =
+        typeof chart.addSeries === 'function' && CandlestickSeries
+          ? chart.addSeries(CandlestickSeries, seriesOptions)
+          : chart.addCandlestickSeries(seriesOptions)
 
-      /* ── seed with placeholder historical candles ────────────────── */
       const now = Math.floor(Date.now() / 1000)
-      const seedData = generateSeedCandles(now, 120) // 120 candles
+      const seedData = generateSeedCandles(now, 120, activeTfObj.intervalSeconds)
       candleSeries.setData(seedData)
 
       chartRef.current = chart
@@ -70,7 +78,6 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
 
       if (onChartReady) onChartReady()
 
-      /* ── handle resize ──────────────────────────────────────────── */
       const ro = new ResizeObserver((entries) => {
         for (const entry of entries) {
           chart.applyOptions({ width: entry.contentRect.width })
@@ -90,21 +97,31 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
     }
   }, [onChartReady])
 
+  /* ── update candles when timeframe changes ────────────────────────── */
+  useEffect(() => {
+    if (!seriesRef.current) return
+    const now = Math.floor(Date.now() / 1000)
+    const seedData = generateSeedCandles(now, 120, activeTfObj.intervalSeconds)
+    seriesRef.current.setData(seedData)
+  }, [timeframe, activeTfObj.intervalSeconds])
+
   /* ── real-time candle tick generator & WS listener ─────────────── */
   useEffect(() => {
     let currentCandle = null
     let timer = null
 
+    const interval = activeTfObj.intervalSeconds
+
     const startLocalTickStream = () => {
       timer = setInterval(() => {
         if (!seriesRef.current) return
         const now = Math.floor(Date.now() / 1000)
-        const minuteTime = Math.floor(now / 60) * 60
+        const candleTime = Math.floor(now / interval) * interval
 
-        if (!currentCandle || minuteTime > currentCandle.time) {
+        if (!currentCandle || candleTime > currentCandle.time) {
           const prevClose = currentCandle ? currentCandle.close : 2375.14
           currentCandle = {
-            time: minuteTime,
+            time: candleTime,
             open: prevClose,
             high: prevClose,
             low: prevClose,
@@ -112,7 +129,7 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
           }
         }
 
-        const delta = (Math.random() - 0.49) * 0.45
+        const delta = (Math.random() - 0.49) * (0.45 * Math.sqrt(interval / 60))
         const newClose = +(currentCandle.close + delta).toFixed(2)
         currentCandle.close = newClose
         currentCandle.high = Math.max(currentCandle.high, newClose)
@@ -131,11 +148,11 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
     function onMessage(evt) {
       try {
         const msg = JSON.parse(evt.data)
-        if (msg.type === 'candle' && seriesRef.current && msg.data) {
+        if (msg.type === 'candle' && seriesRef.current && msg.data && timeframe === '1m') {
           seriesRef.current.update(msg.data)
         }
       } catch {
-        /* ignore non-JSON frames */
+        /* ignore non-JSON */
       }
     }
 
@@ -145,13 +162,12 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
       clearInterval(timer)
       ws.removeEventListener('message', onMessage)
     }
-  }, [wsRef])
+  }, [wsRef, timeframe, activeTfObj.intervalSeconds])
 
   /* ── draw signal price-lines on the chart ──────────────────────── */
   useEffect(() => {
     if (!seriesRef.current) return
 
-    // Clear old price lines
     priceLinesRef.current.forEach((pl) => {
       try {
         seriesRef.current.removePriceLine(pl)
@@ -161,7 +177,6 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
     })
     priceLinesRef.current = []
 
-    // Draw new price lines from signals
     signals.forEach((sig) => {
       if (!sig.entry || !sig.stopLoss || !sig.takeProfit) return
 
@@ -171,7 +186,7 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
         lineWidth: 1,
         lineStyle: 0,
         axisLabelVisible: true,
-        title: `Entry ${sig.direction === 'LONG' ? '▲' : '▼'}`,
+        title: `Entry ${sig.direction === 'LONG' ? 'BUY' : 'SELL'}`,
       })
       const slLine = seriesRef.current.createPriceLine({
         price: sig.stopLoss,
@@ -195,9 +210,9 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
   }, [signals])
 
   return (
-    <div className="fc-card p-6 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 pb-3 border-b border-[var(--stone)]">
+    <div className="fc-card p-6 space-y-4 bg-white">
+      {/* Header + Timeframe Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-[var(--stone)]">
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
@@ -209,12 +224,31 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
           </div>
           <div>
             <h3 className="fc-heading text-xl">XAU / USD</h3>
-            <p className="text-xs text-brown">Gold Spot · 1-Minute Live Candlesticks</p>
+            <p className="text-xs text-brown font-mono">
+              Gold Spot · {activeTfObj.title} Candlesticks
+            </p>
           </div>
         </div>
-        <span className="fc-badge fc-badge-win text-xs px-3 py-1 font-semibold">
-          LIVE FEED
-        </span>
+
+        {/* Timeframe Selector Buttons */}
+        <div className="flex items-center gap-1.5 fc-surface p-1 rounded-lg border border-[var(--stone)] self-start sm:self-auto">
+          {TIMEFRAMES.map((tf) => (
+            <button
+              key={tf.id}
+              onClick={() => setTimeframe(tf.id)}
+              className={`px-3 py-1 text-xs font-mono font-semibold rounded-md transition-all ${
+                timeframe === tf.id
+                  ? 'bg-[var(--ink)] text-white shadow-sm'
+                  : 'text-charcoal hover:bg-[var(--stone)]'
+              }`}
+            >
+              {tf.label}
+            </button>
+          ))}
+          <span className="ml-2 fc-badge fc-badge-win text-[11px] px-2.5 py-0.5 font-semibold">
+            LIVE
+          </span>
+        </div>
       </div>
 
       {/* Chart container */}
@@ -223,15 +257,14 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
   )
 }
 
-/* ── helper: generate realistic seed candles ────────────────────── */
-function generateSeedCandles(nowUnix, count) {
+/* ── helper: generate seed candles for specific timeframe interval ─ */
+function generateSeedCandles(nowUnix, count, intervalSeconds = 60) {
   const candles = []
-  const interval = 60 // 1-min candles
-  let price = 2340 + Math.random() * 30
+  let price = 2372 + Math.random() * 5
 
   for (let i = count; i > 0; i--) {
-    const time = nowUnix - i * interval
-    const volatility = 0.8 + Math.random() * 1.2
+    const time = Math.floor((nowUnix - i * intervalSeconds) / intervalSeconds) * intervalSeconds
+    const volatility = (0.8 + Math.random() * 1.2) * Math.sqrt(intervalSeconds / 60)
     const open = price
     const close = open + (Math.random() - 0.48) * volatility
     const high = Math.max(open, close) + Math.random() * volatility * 0.6
