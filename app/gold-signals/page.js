@@ -15,9 +15,9 @@ export default async function GoldSignalsPage() {
   const session = user ? { user } : null
 
   return (
-    <div style={{ background: '#09090b' }} className="min-h-screen">
+    <div className="min-h-screen bg-[var(--canvas)]">
       <Navbar initialSession={session} />
-      <main className="max-w-7xl mx-auto px-4 py-6 md:py-10">
+      <main className="max-w-7xl mx-auto px-4 py-8 md:py-14">
         <GoldSignalsClient />
       </main>
     </div>
