@@ -3,10 +3,12 @@
 /**
  * SignalCard – High-quality CRT setup card with win/loss status tracking.
  * Emojis are omitted per user preference.
+ * Displays analysis timeframe (30m, 1h, 2h) and 60+ pips reward targets.
  */
 export default function SignalCard({ signal, index }) {
   const {
     direction,
+    tf = '1h',
     entry,
     stopLoss,
     takeProfit,
@@ -14,7 +16,8 @@ export default function SignalCard({ signal, index }) {
     confidence,
     confluence,
     status,
-    timestamp,
+    rewardPips,
+    riskPips,
   } = signal
 
   const isLong = direction === 'LONG'
@@ -23,6 +26,8 @@ export default function SignalCard({ signal, index }) {
 
   const risk = Math.abs(entry - stopLoss)
   const reward = Math.abs(takeProfit - entry)
+  const calculatedRewardPips = rewardPips || Math.round(reward * 10)
+  const calculatedRiskPips = riskPips || Math.round(risk * 10)
 
   return (
     <div
@@ -49,7 +54,7 @@ export default function SignalCard({ signal, index }) {
         }}
       />
 
-      {/* Header: Direction + Signal # + WIN/LOSS outcome badge */}
+      {/* Header: Direction + Timeframe Badge + WIN/LOSS outcome badge */}
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-2">
           <span
@@ -59,6 +64,9 @@ export default function SignalCard({ signal, index }) {
           >
             {isLong ? 'BUY / LONG' : 'SELL / SHORT'}
           </span>
+          <span className="fc-badge fc-badge-tag text-xs px-2 py-0.5 font-mono font-semibold">
+            {tf}
+          </span>
           <span className="text-xs text-muted font-mono font-medium">#{index + 1}</span>
         </div>
 
@@ -67,9 +75,9 @@ export default function SignalCard({ signal, index }) {
           <span
             className={`fc-badge ${
               isWin ? 'fc-badge-win' : 'fc-badge-loss'
-            } text-xs px-3 py-0.5 font-extrabold tracking-widest uppercase`}
+            } text-xs px-2.5 py-0.5 font-extrabold tracking-widest uppercase`}
           >
-            {isWin ? 'WIN +1.5R' : 'LOSS -1.0R'}
+            {isWin ? `WIN +${riskReward || 1.5}R` : 'LOSS -1.0R'}
           </span>
         ) : (
           <span className="fc-badge fc-badge-neutral text-xs px-2.5 py-0.5 font-medium">
@@ -81,7 +89,7 @@ export default function SignalCard({ signal, index }) {
       {/* Confluence note */}
       {confluence && (
         <div className="fc-surface px-2.5 py-1.5 rounded text-[11px] text-charcoal font-medium">
-          <span className="text-muted">Setup: </span>
+          <span className="text-muted">{tf} Setup: </span>
           {confluence}
         </div>
       )}
@@ -121,10 +129,10 @@ export default function SignalCard({ signal, index }) {
         </div>
       </div>
 
-      {/* Risk / Reward point metrics */}
+      {/* Risk / Reward point & pip metrics */}
       <div className="grid grid-cols-2 gap-2 pt-1">
-        <MetricChip label="Risk" value={`${risk.toFixed(2)} pts`} isPos={false} />
-        <MetricChip label="Reward" value={`${reward.toFixed(2)} pts`} isPos={true} />
+        <MetricChip label="Risk" value={`${risk.toFixed(2)} pts (${calculatedRiskPips} pips)`} isPos={false} />
+        <MetricChip label="Target Reward" value={`${reward.toFixed(2)} pts (${calculatedRewardPips} pips)`} isPos={true} />
       </div>
     </div>
   )
