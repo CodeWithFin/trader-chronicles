@@ -65,58 +65,55 @@ export default function GoldSignalsClient() {
   }, [connect])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-2 border-b border-[var(--stone)]">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-white font-semibold text-2xl tracking-tight" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
-              Gold (XAU/USD) Signals
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
+            <h1 className="fc-display text-4xl sm:text-5xl md:text-6xl">
+              Gold (XAU/USD) <span className="text-[#ff3e00]">Signals</span>
             </h1>
-            <span
-              className="fc-badge text-[10px] font-bold tracking-wider"
-              style={{ background: 'rgba(250,204,21,0.12)', color: '#facc15' }}
-            >
-              CRT
+            <span className="fc-badge fc-badge-neutral text-xs px-3 py-1 font-semibold">
+              CRT Strategy
             </span>
           </div>
-          <p className="text-zinc-500 text-[13px]">
-            Candle Range Theory signals pushed at each session open · 1.5R risk-to-reward
+          <p className="text-brown text-base sm:text-lg max-w-2xl leading-relaxed">
+            Candle Range Theory signals pushed at session opens with automated 1.5R risk-to-reward target levels.
           </p>
         </div>
 
-        {/* WebSocket connection indicator */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* WebSocket connection status indicator */}
+        <div className="fc-surface px-4 py-2 flex items-center gap-2.5 shrink-0 self-start sm:self-auto border border-[var(--stone)]">
           <span className="relative flex h-2.5 w-2.5">
             {wsStatus === 'connected' && (
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--grass)] opacity-75" />
             )}
             <span
               className="relative inline-flex rounded-full h-2.5 w-2.5"
               style={{
                 background:
                   wsStatus === 'connected'
-                    ? '#22c55e'
+                    ? 'var(--grass)'
                     : wsStatus === 'connecting'
-                    ? '#fbbf24'
-                    : '#ef4444',
+                    ? 'var(--honey)'
+                    : 'var(--alert)',
               }}
             />
           </span>
-          <span className="text-[11px] text-zinc-500 font-mono">
+          <span className="text-xs font-semibold text-charcoal">
             {wsStatus === 'connected'
-              ? 'Live'
+              ? 'Live Feed Connected'
               : wsStatus === 'connecting'
               ? 'Connecting…'
-              : 'Offline'}
+              : 'Server Offline'}
           </span>
         </div>
       </div>
 
-      {/* Chart */}
+      {/* Live Candlestick Chart */}
       <GoldChart wsRef={wsRef} signals={activeSignals} />
 
-      {/* Session signals */}
+      {/* CRT Session Signals Grid */}
       <SessionSignals wsRef={wsRef} />
     </div>
   )
