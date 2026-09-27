@@ -99,24 +99,24 @@ export default function SessionSignals({ wsRef }) {
   }, [wsRef])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Section header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-white font-semibold text-lg tracking-tight">CRT Session Signals</h2>
-          <p className="text-zinc-500 text-[13px] mt-0.5">
-            5 signals per session · 1.5R risk-to-reward
+          <h2 className="fc-heading text-2xl text-ink">CRT Session Signals</h2>
+          <p className="text-brown text-sm mt-1">
+            5 automated signals generated per trading session · 1.5R risk-to-reward ratio
           </p>
         </div>
         {lastUpdated && (
-          <span className="text-[11px] text-zinc-600">
-            Updated {lastUpdated.toLocaleTimeString()}
+          <span className="text-xs text-muted font-medium">
+            Last updated {lastUpdated.toLocaleTimeString()}
           </span>
         )}
       </div>
 
       {/* Three-column session grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {SESSIONS.map((session) => {
           const isActive = activeSessions.includes(session.id)
           const signals = signalsBySession[session.id] || []
@@ -124,63 +124,54 @@ export default function SessionSignals({ wsRef }) {
           return (
             <div
               key={session.id}
-              className="rounded-xl overflow-hidden transition-all duration-300"
+              className="fc-card p-5 space-y-4 flex flex-col transition-all duration-200"
               style={{
-                background: '#111113',
                 boxShadow: isActive
-                  ? `inset 0 0 0 1px ${session.activeColor}33, 0 0 30px ${session.glowColor}`
-                  : 'inset 0 0 0 1px rgba(255,255,255,0.05)',
+                  ? `inset 0 0 0 2px var(--grass), 0 4px 20px rgba(0, 201, 120, 0.08)`
+                  : 'inset 0 0 0 1px var(--stone)',
               }}
             >
               {/* Session header */}
-              <div className="p-4 flex items-center gap-3 border-b border-white/[0.04]">
+              <div className="flex items-center gap-3 pb-3 border-b border-[var(--stone)]">
                 <span
-                  className="w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
                   style={{ background: session.gradient }}
                 >
                   {session.icon}
                 </span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-white text-sm font-semibold truncate">{session.name}</h3>
+                    <h3 className="fc-heading text-base text-ink truncate">{session.name}</h3>
                     {isActive && (
                       <span className="relative flex h-2 w-2 shrink-0">
-                        <span
-                          className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                          style={{ background: session.activeColor }}
-                        />
-                        <span
-                          className="relative inline-flex rounded-full h-2 w-2"
-                          style={{ background: session.activeColor }}
-                        />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--grass)] opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--grass)]" />
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-zinc-500 font-mono">{session.timeRange}</p>
+                  <p className="text-xs text-muted font-medium">{session.timeRange}</p>
                 </div>
                 <span
-                  className="ml-auto fc-badge text-[10px]"
-                  style={{
-                    background: isActive ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
-                    color: isActive ? '#4ade80' : '#52525b',
-                  }}
+                  className={`ml-auto fc-badge ${
+                    isActive ? 'fc-badge-win' : 'fc-badge-tag'
+                  } text-xs px-2.5 py-0.5`}
                 >
                   {isActive ? 'ACTIVE' : 'CLOSED'}
                 </span>
               </div>
 
-              {/* Signal cards */}
-              <div className="p-3 space-y-2 max-h-[560px] overflow-y-auto">
+              {/* Signal cards list */}
+              <div className="space-y-3 flex-1">
                 {signals.length > 0 ? (
                   signals.map((sig, i) => <SignalCard key={i} signal={sig} index={i} />)
                 ) : (
-                  <div className="py-10 text-center">
-                    <div className="text-2xl mb-2 opacity-30">{session.icon}</div>
-                    <p className="text-zinc-600 text-[12px]">
+                  <div className="fc-surface py-10 px-4 text-center rounded-[10px] my-auto">
+                    <div className="text-3xl mb-2 opacity-50">{session.icon}</div>
+                    <p className="text-charcoal font-medium text-sm">
                       {isActive ? 'Waiting for signals…' : 'Session closed'}
                     </p>
-                    <p className="text-zinc-700 text-[11px] mt-1">
-                      Signals push at session open
+                    <p className="text-muted text-xs mt-1">
+                      Signals automatically broadcast at session open
                     </p>
                   </div>
                 )}
