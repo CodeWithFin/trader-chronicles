@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import GoldChart from '@/components/GoldChart'
 import SessionSignals from '@/components/SessionSignals'
 
-const WS_URL = process.env.NEXT_PUBLIC_SIGNALS_WS_URL || 'ws://127.0.0.1:3001'
+const WS_URL = process.env.NEXT_PUBLIC_SIGNALS_WS_URL || 'ws://127.0.0.1:3002'
 const RECONNECT_DELAY_MS = 3000
 const MAX_RECONNECT_ATTEMPTS = 10
 

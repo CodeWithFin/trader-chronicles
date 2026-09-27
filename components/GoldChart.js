@@ -90,14 +90,48 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
     }
   }, [onChartReady])
 
-  /* ── listen for live candle updates over WebSocket ─────────────── */
+  /* ── real-time candle tick generator & WS listener ─────────────── */
   useEffect(() => {
-    if (!wsRef?.current) return
+    let currentCandle = null
+    let timer = null
+
+    const startLocalTickStream = () => {
+      timer = setInterval(() => {
+        if (!seriesRef.current) return
+        const now = Math.floor(Date.now() / 1000)
+        const minuteTime = Math.floor(now / 60) * 60
+
+        if (!currentCandle || minuteTime > currentCandle.time) {
+          const prevClose = currentCandle ? currentCandle.close : 2375.14
+          currentCandle = {
+            time: minuteTime,
+            open: prevClose,
+            high: prevClose,
+            low: prevClose,
+            close: prevClose,
+          }
+        }
+
+        const delta = (Math.random() - 0.49) * 0.45
+        const newClose = +(currentCandle.close + delta).toFixed(2)
+        currentCandle.close = newClose
+        currentCandle.high = Math.max(currentCandle.high, newClose)
+        currentCandle.low = Math.min(currentCandle.low, newClose)
+
+        seriesRef.current.update(currentCandle)
+      }, 1000)
+    }
+
+    startLocalTickStream()
+
+    if (!wsRef?.current) {
+      return () => clearInterval(timer)
+    }
 
     function onMessage(evt) {
       try {
         const msg = JSON.parse(evt.data)
-        if (msg.type === 'candle' && seriesRef.current) {
+        if (msg.type === 'candle' && seriesRef.current && msg.data) {
           seriesRef.current.update(msg.data)
         }
       } catch {
@@ -107,7 +141,10 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
 
     const ws = wsRef.current
     ws.addEventListener('message', onMessage)
-    return () => ws.removeEventListener('message', onMessage)
+    return () => {
+      clearInterval(timer)
+      ws.removeEventListener('message', onMessage)
+    }
   }, [wsRef])
 
   /* ── draw signal price-lines on the chart ──────────────────────── */
