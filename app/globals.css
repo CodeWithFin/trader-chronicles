@@ -220,6 +220,32 @@ body {
     color: var(--warn-fg);
   }
 
+  /* Progress bars */
+  .fc-progress-track {
+    position: relative;
+    height: 10px;
+    border-radius: 9999px;
+    background: var(--stone);
+    overflow: hidden;
+  }
+  .fc-progress-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: var(--grass);
+    transition: width 300ms ease;
+  }
+  .fc-progress-fill-hit {
+    background: var(--honey);
+  }
+  .fc-progress-tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--white);
+    opacity: 0.6;
+  }
+
   /* Status text */
   .fc-text-pos {
     color: var(--pos-fg);
