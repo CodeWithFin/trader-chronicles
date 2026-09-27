@@ -30,7 +30,7 @@ export default function GoldChart({ wsRef, signals = [], onChartReady }) {
         layout: {
           background: { color: '#111113' },
           textColor: '#a1a1aa',
-          fontFamily: 'var(--font-inter), ui-sans-serif, system-ui, sans-serif',
+          fontFamily: 'var(--font-jetbrains-mono), ui-monospace, monospace',
         },
         grid: {
           vertLines: { color: 'rgba(255,255,255,0.04)' },
