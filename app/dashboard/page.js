@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
+import TargetsWidget from '@/components/TargetsWidget'
 import { cookies } from 'next/headers'
 import { getSessionUser } from '@/lib/auth'
 
@@ -23,6 +24,8 @@ export default async function Dashboard() {
             visualization and analytics.
           </p>
         </section>
+
+        <TargetsWidget />
 
         <section className="w-full grid grid-cols-1 md:grid-cols-3 gap-3 mb-16">
           <Link href="/trades/new" className="fc-card fc-card-hover p-8 flex flex-col">
