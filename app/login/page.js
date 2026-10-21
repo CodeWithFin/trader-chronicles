@@ -29,8 +29,7 @@ export default function Login() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Login failed')
 
-      router.push('/dashboard')
-      router.refresh()
+      window.location.href = '/dashboard'
     } catch (err) {
       setError(err.message || 'Failed to login')
     } finally {
