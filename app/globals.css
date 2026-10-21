@@ -38,7 +38,7 @@
 }
 
 body {
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
   background-color: var(--canvas);
   color: var(--charcoal);
 }
