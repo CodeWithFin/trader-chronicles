@@ -9,9 +9,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        family: ['var(--font-space-grotesk)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-jetbrains-mono)', 'ui-monospace', 'monospace'],
-        sans: ['var(--font-jetbrains-mono)', 'ui-monospace', 'monospace'],
+        sans: ['Space Grotesk', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       colors: {
         canvas: '#fbfaf9',

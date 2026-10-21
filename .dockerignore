@@ -1,0 +1,11 @@
+.git
+.gitignore
+node_modules
+.env
+.env.*
+!.env.example
+*.md
+client/
+server/
+sync-agent/
+supabase/

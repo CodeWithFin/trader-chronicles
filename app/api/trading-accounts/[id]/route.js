@@ -7,6 +7,13 @@ import {
   isTradingAccountsSchemaMissingError,
   TRADING_ACCOUNTS_MIGRATION_HELP,
 } from '@/lib/trades-schema-fallback'
+import crypto from 'crypto'
+
+export const dynamic = 'force-dynamic'
+
+function generateAuthToken() {
+  return 'tc_' + crypto.randomBytes(32).toString('hex')
+}
 
 export async function PATCH(request, { params }) {
   try {
@@ -16,61 +23,112 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+    const body = await request.json()
+
     const sql = getSql()
-    const existing = await getTradingAccountForUser(sql, params.id, user.id)
-    if (!existing) {
+    const acct = await getTradingAccountForUser(sql, id, user.id)
+    if (!acct) {
       return NextResponse.json({ error: 'Trading account not found' }, { status: 404 })
     }
 
-    const body = await request.json()
+    // Build dynamic update query
     const updates = []
-    const values = []
-    let idx = 1
+    const values = [id, user.id]
+    let paramIndex = 3
 
     if (body.label !== undefined) {
       const label = String(body.label || '').trim()
       if (!label || label.length > 80) {
-        return NextResponse.json({ error: 'Invalid label' }, { status: 400 })
+        return NextResponse.json({ error: 'Label is required (max 80 characters)' }, { status: 400 })
       }
-      updates.push(`label = $${idx}`)
+      updates.push(`label = $${paramIndex}`)
       values.push(label)
-      idx += 1
+      paramIndex++
     }
 
     if (body.kind !== undefined) {
-      if (!['eval', 'funded', 'live', 'other'].includes(body.kind)) {
-        return NextResponse.json({ error: 'Invalid kind' }, { status: 400 })
-      }
-      updates.push(`kind = $${idx}`)
-      values.push(body.kind)
-      idx += 1
+      const kind = ['eval', 'funded', 'live', 'other'].includes(body.kind) ? body.kind : 'other'
+      updates.push(`kind = $${paramIndex}`)
+      values.push(kind)
+      paramIndex++
     }
 
     if (body.startingBalance !== undefined) {
-      updates.push(`starting_balance = $${idx}`)
-      values.push(normalizeStartingBalance(body.startingBalance, existing.starting_balance))
-      idx += 1
+      const startingBalance = normalizeStartingBalance(body.startingBalance, 10000)
+      updates.push(`starting_balance = $${paramIndex}`)
+      values.push(startingBalance)
+      paramIndex++
     }
 
     if (body.sortOrder !== undefined) {
-      const so = parseInt(body.sortOrder, 10)
-      updates.push(`sort_order = $${idx}`)
-      values.push(Number.isFinite(so) ? so : 0)
-      idx += 1
+      const sortOrder = Number.isFinite(parseInt(body.sortOrder, 10)) ? parseInt(body.sortOrder, 10) : 0
+      updates.push(`sort_order = $${paramIndex}`)
+      values.push(sortOrder)
+      paramIndex++
+    }
+
+    // MT4/MT5 fields
+    if (body.mtAccountNumber !== undefined) {
+      const mtAccountNumber = body.mtAccountNumber ? String(body.mtAccountNumber).trim() : null
+      updates.push(`mt_account_number = $${paramIndex}`)
+      values.push(mtAccountNumber)
+      paramIndex++
+    }
+
+    if (body.mtBrokerServer !== undefined) {
+      const mtBrokerServer = body.mtBrokerServer ? String(body.mtBrokerServer).trim() : null
+      updates.push(`mt_broker_server = $${paramIndex}`)
+      values.push(mtBrokerServer)
+      paramIndex++
+    }
+
+    if (body.mtPassword !== undefined) {
+      const mtPassword = body.mtPassword ? String(body.mtPassword).trim() : null
+      updates.push(`mt_password = $${paramIndex}`)
+      values.push(mtPassword)
+      paramIndex++
+    }
+
+    if (body.mtPlatform !== undefined) {
+      const mtPlatform = ['mt4', 'mt5'].includes(body.mtPlatform) ? body.mtPlatform : null
+      updates.push(`mt_platform = $${paramIndex}`)
+      values.push(mtPlatform)
+      paramIndex++
+    }
+
+    // Auth token generation
+    if (body.generateAuthToken === true) {
+      const token = generateAuthToken()
+      updates.push(`auth_token = $${paramIndex}, auth_token_created_at = TIMEZONE('utc'::text, NOW())`)
+      values.push(token)
+      paramIndex++
+    }
+
+    if (body.revokeAuthToken === true) {
+      updates.push(`auth_token = NULL, auth_token_created_at = NULL`)
     }
 
     if (updates.length === 0) {
-      return NextResponse.json(existing)
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
     }
 
-    values.push(params.id, user.id)
+    updates.push(`updated_at = TIMEZONE('utc'::text, NOW())`)
+
     const query = `
-      UPDATE trading_accounts SET ${updates.join(', ')}
-      WHERE id = $${idx} AND user_id = $${idx + 1}
-      RETURNING id, label, kind, starting_balance, sort_order, created_at
+      UPDATE trading_accounts
+      SET ${updates.join(', ')}
+      WHERE id = $1 AND user_id = $2
+      RETURNING id, label, kind, starting_balance, sort_order, mt_account_number, mt_broker_server, mt_platform, last_synced_at, auth_token, auth_token_created_at, created_at
     `
+
     const rows = await sql.query(query, values)
-    return NextResponse.json(rows?.[0] || existing)
+    const row = rows?.[0]
+    if (!row) {
+      return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+    }
+
+    return NextResponse.json(row)
   } catch (error) {
     if (isTradingAccountsSchemaMissingError(error)) {
       return NextResponse.json({ error: TRADING_ACCOUNTS_MIGRATION_HELP }, { status: 503 })
@@ -87,34 +145,30 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
+
     const sql = getSql()
-    const existing = await getTradingAccountForUser(sql, params.id, user.id)
-    if (!existing) {
+    const acct = await getTradingAccountForUser(sql, id, user.id)
+    if (!acct) {
       return NextResponse.json({ error: 'Trading account not found' }, { status: 404 })
     }
 
-    const countRows = await sql.query(
+    // Check if account has trades
+    const tradeCount = await sql.query(
       `SELECT COUNT(*)::int AS c FROM backtest_entries WHERE account_id = $1`,
-      [params.id]
+      [id]
     )
-    const count = countRows?.[0]?.c ?? 0
-    if (count > 0) {
+
+    if (tradeCount[0]?.c > 0) {
       return NextResponse.json(
-        { error: `This account has ${count} trade(s). Move or delete them before removing the account.` },
-        { status: 409 }
+        { error: 'Cannot delete account with existing trades. Delete or reassign trades first.' },
+        { status: 400 }
       )
     }
 
-    const others = await sql.query(
-      `SELECT COUNT(*)::int AS c FROM trading_accounts WHERE user_id = $1`,
-      [user.id]
-    )
-    if ((others?.[0]?.c ?? 0) <= 1) {
-      return NextResponse.json({ error: 'You must keep at least one trading account.' }, { status: 409 })
-    }
+    await sql.query(`DELETE FROM trading_accounts WHERE id = $1 AND user_id = $2`, [id, user.id])
 
-    await sql.query(`DELETE FROM trading_accounts WHERE id = $1 AND user_id = $2`, [params.id, user.id])
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ success: true })
   } catch (error) {
     if (isTradingAccountsSchemaMissingError(error)) {
       return NextResponse.json({ error: TRADING_ACCOUNTS_MIGRATION_HELP }, { status: 503 })

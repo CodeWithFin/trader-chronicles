@@ -1,18 +1,8 @@
 import './globals.css'
-import { JetBrains_Mono, Space_Grotesk } from 'next/font/google'
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-jetbrains-mono',
-})
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  display: 'swap',
-  weight: ['500', '600'],
-  variable: '--font-space-grotesk',
-})
+import '@fontsource/space-grotesk/500.css'
+import '@fontsource/space-grotesk/600.css'
+import '@fontsource/jetbrains-mono/400.css'
+import '@fontsource/jetbrains-mono/500.css'
 
 export const metadata = {
   title: 'Trader Chronicles - Trade Journal',
@@ -26,8 +16,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${jetbrainsMono.variable} ${spaceGrotesk.variable}`}>
-      <body className="font-mono antialiased">{children}</body>
+    <html lang="en">
+      <body className="antialiased">{children}</body>
     </html>
   )
 }

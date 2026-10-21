@@ -1,0 +1,5 @@
+MetaTrader5==5.0.45
+requests==2.31.0
+PyQt6==6.6.1
+python-dotenv==1.0.0
+keyring==25.3.0

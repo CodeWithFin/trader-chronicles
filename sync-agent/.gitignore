@@ -1,0 +1,31 @@
+# Trader Chronicles Sync Agent - Git Ignore
+
+# Build outputs
+dist/
+build/
+*.spec
+*.pyc
+__pycache__/
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PyInstaller
+*.manifest
+*.exe
+*.dmg
+*.AppImage
