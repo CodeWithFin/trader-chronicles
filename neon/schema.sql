@@ -19,10 +19,19 @@ CREATE TABLE IF NOT EXISTS public.trading_accounts (
   kind TEXT NOT NULL DEFAULT 'other' CHECK (kind IN ('eval', 'funded', 'live', 'other')),
   starting_balance NUMERIC(20, 8) NOT NULL DEFAULT 10000 CHECK (starting_balance >= 0),
   sort_order INT NOT NULL DEFAULT 0,
+  mt_account_number TEXT,
+  mt_broker_server TEXT,
+  mt_password TEXT,
+  mt_platform TEXT CHECK (mt_platform IN ('mt4', 'mt5')),
+  last_synced_at TIMESTAMPTZ,
+  auth_token TEXT,
+  auth_token_created_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_trading_accounts_user_id ON public.trading_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_trading_accounts_mt_account ON public.trading_accounts(mt_account_number);
+CREATE INDEX IF NOT EXISTS idx_trading_accounts_auth_token ON public.trading_accounts(auth_token);
 
 CREATE TABLE IF NOT EXISTS public.account_targets (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
