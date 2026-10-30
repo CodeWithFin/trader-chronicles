@@ -56,6 +56,15 @@ const NAV_LINKS = [
     ),
   },
   {
+    href: '/signals',
+    label: 'Signals',
+    icon: (
+      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3l1.664 9.136M3 3h2m-2 0L5 3m14.336 9.136L21 3m0 0h-2m2 0l-2 0M9 17h6m-3-3v3m-7 4h14a1 1 0 001-1v-1a4 4 0 00-4-4H8a4 4 0 00-4 4v1a1 1 0 001 1z" />
+      </svg>
+    ),
+  },
+  {
     href: '/leaderboard',
     label: 'Leaderboard',
     icon: (

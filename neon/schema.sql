@@ -106,6 +106,25 @@ CREATE INDEX IF NOT EXISTS idx_backtest_trades_date_time ON public.backtest_trad
 CREATE INDEX IF NOT EXISTS idx_backtest_trades_asset_pair ON public.backtest_trades(asset_pair);
 CREATE INDEX IF NOT EXISTS idx_backtest_trades_result ON public.backtest_trades(result);
 
+CREATE TABLE IF NOT EXISTS public.signals (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  asset_pair TEXT NOT NULL,
+  direction TEXT NOT NULL CHECK (direction IN ('Long', 'Short')),
+  entry_price DECIMAL(20, 8),
+  stop_loss DECIMAL(20, 8),
+  take_profit DECIMAL(20, 8),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'closed', 'stopped', 'cancelled')),
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  resolved_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_signals_user_id ON public.signals(user_id);
+CREATE INDEX IF NOT EXISTS idx_signals_status ON public.signals(status);
+CREATE INDEX IF NOT EXISTS idx_signals_created_at ON public.signals(created_at DESC);
+
 CREATE OR REPLACE FUNCTION public.get_public_trader_stats()
 RETURNS TABLE (
   id UUID,
