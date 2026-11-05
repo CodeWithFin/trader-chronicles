@@ -7,19 +7,6 @@ import Image from 'next/image'
 
 const NAV_LINKS = [
   {
-    href: '/trades',
-    label: 'Trade Log',
-    icon: (
-      <svg className="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden>
-        <path d="M0 0h48v48H0z" fill="none" />
-        <g fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="4">
-          <path d="M13 10h28v34H13z" />
-          <path strokeLinecap="round" d="M35 10V4H8a1 1 0 0 0-1 1v33h6m8-16h12m-12 8h12" />
-        </g>
-      </svg>
-    ),
-  },
-  {
     href: '/analytics',
     label: 'Analytics',
     icon: (
