@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { getSql } from '@/lib/db'
 import { getSessionUser } from '@/lib/auth'
-import { ensureTradingAccountForUser, normalizeStartingBalance } from '@/lib/trading-accounts'
+import { normalizeStartingBalance } from '@/lib/trading-accounts'
 import {
   isTradingAccountsSchemaMissingError,
   TRADING_ACCOUNTS_MIGRATION_HELP,
@@ -24,7 +24,6 @@ export async function GET() {
     }
 
     const sql = getSql()
-    await ensureTradingAccountForUser(sql, user.id)
 
     const rows = await sql.query(
       `SELECT id, label, kind, starting_balance, sort_order, mt_account_number, mt_broker_server, mt_platform, last_synced_at, auth_token, auth_token_created_at, created_at
