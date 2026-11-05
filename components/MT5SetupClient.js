@@ -2,10 +2,34 @@
 
 import { useState } from 'react'
 
+const BROKERS = [
+  {
+    id: 'equity_edge',
+    label: 'Equity Edge',
+    suffix: '',
+    note: 'Standard symbol names (e.g. EURUSD)',
+  },
+  {
+    id: 'just_markets',
+    label: 'Just Markets',
+    suffix: '+',
+    note: 'Symbols end with "+" (e.g. EURUSD+) — stripped automatically',
+  },
+  {
+    id: 'valetax',
+    label: 'Valetax',
+    suffix: '.v',
+    note: 'Symbols end with ".v" (e.g. EURUSD.v) — stripped automatically',
+  },
+]
+
 export default function MT5SetupClient({ initialKey, serverUrl }) {
   const [apiKey, setApiKey] = useState(initialKey)
   const [copied, setCopied] = useState('')
   const [regenerating, setRegenerating] = useState(false)
+  const [brokerId, setBrokerId] = useState('equity_edge')
+
+  const broker = BROKERS.find((b) => b.id === brokerId) || BROKERS[0]
 
   const copy = (text, label) => {
     navigator.clipboard.writeText(text)
@@ -25,16 +49,39 @@ export default function MT5SetupClient({ initialKey, serverUrl }) {
     }
   }
 
-  const eaCode = `input string ApiKey    = "${apiKey ?? ''}";
-input string ServerUrl = "${serverUrl}";`
+  const brokerEnumIndex = BROKERS.findIndex((b) => b.id === brokerId)
+  const eaCode = `Broker    = ${broker.label}   ← select in dropdown
+ApiKey    = ${apiKey ?? 'YOUR_API_KEY'}
+ServerUrl = ${serverUrl}  ← do not change`
 
   return (
     <div className="fc-card p-6 space-y-6">
       <div>
         <h2 className="fc-heading text-xl mb-1">MT5 Auto-Import</h2>
         <p className="text-brown text-sm">
-          Install the EA on your MT5 chart and it will automatically log every closed trade to your journal.
+          Install the EA on your MT5 chart and every closed trade logs to your journal automatically.
         </p>
+      </div>
+
+      {/* Broker selector */}
+      <div>
+        <label className="fc-label mb-2 block">Select your broker</label>
+        <div className="flex flex-wrap gap-2">
+          {BROKERS.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => setBrokerId(b.id)}
+              className={`px-4 py-2 rounded-[10px] text-sm font-semibold border transition-colors ${
+                brokerId === b.id
+                  ? 'bg-ink text-canvas border-ink'
+                  : 'bg-canvas text-charcoal border-stone hover:bg-stone'
+              }`}
+            >
+              {b.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-brown mt-2">{broker.note}</p>
       </div>
 
       {/* API Key */}
@@ -63,42 +110,89 @@ input string ServerUrl = "${serverUrl}";`
         <p className="text-xs text-brown mt-1">Keep this private — anyone with it can write trades to your journal.</p>
       </div>
 
-      {/* Step by step */}
+      {/* Steps */}
       <div className="space-y-4">
         <h3 className="font-semibold text-sm uppercase tracking-wide text-brown">Setup Instructions</h3>
 
         <div className="space-y-3 text-sm">
+
           <div className="flex gap-3">
             <span className="fc-badge shrink-0 mt-0.5">1</span>
-            <p>Download <strong>TraderChronicles.mq5</strong> from the repo (<code className="text-xs bg-stone px-1 rounded">mt5/TraderChronicles.mq5</code>) and place it in your MT5 <code className="text-xs bg-stone px-1 rounded">MQL5/Experts/</code> folder. Compile it in MetaEditor (F7).</p>
+            <p>
+              Download the EA file and place it in your MT5{' '}
+              <code className="text-xs bg-stone px-1 rounded">MQL5/Experts/</code> folder.
+              Then open MetaEditor (F7 in MT5) and compile it.
+            </p>
+          </div>
+
+          <div className="flex gap-3 ml-8">
+            <a
+              href="/ea/TraderChronicles_Brokers.mq5"
+              download="TraderChronicles_Brokers.mq5"
+              className="fc-btn fc-btn-primary text-sm px-5 py-2.5"
+            >
+              ↓ Download EA — TraderChronicles_Brokers.mq5
+            </a>
           </div>
 
           <div className="flex gap-3">
             <span className="fc-badge shrink-0 mt-0.5">2</span>
-            <p>In MT5, go to <strong>Tools → Options → Expert Advisors</strong> and tick <em>"Allow WebRequest for listed URL"</em>, then add <code className="text-xs bg-stone px-1 rounded">{serverUrl}</code>.</p>
+            <p>
+              In MT5, go to <strong>Tools → Options → Expert Advisors</strong>, tick{' '}
+              <em>"Allow WebRequest for listed URL"</em> and add:
+            </p>
+          </div>
+          <div className="ml-8">
+            <div className="relative">
+              <pre className="bg-stone rounded-lg px-4 py-3 text-xs font-mono">{serverUrl}</pre>
+              <button
+                onClick={() => copy(serverUrl, 'url')}
+                className="absolute top-1.5 right-2 fc-btn fc-btn-ghost text-xs px-2 py-1"
+              >
+                {copied === 'url' ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
           </div>
 
           <div className="flex gap-3">
             <span className="fc-badge shrink-0 mt-0.5">3</span>
-            <p>Attach <strong>TraderChronicles</strong> to any chart. In the EA inputs, paste your key and server URL:</p>
+            <p>
+              Attach <strong>TraderChronicles_Brokers</strong> to any chart. In the EA inputs, set these three values:
+            </p>
+          </div>
+          <div className="ml-8">
+            <div className="relative">
+              <pre className="bg-stone rounded-lg p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap">{eaCode}</pre>
+              <button
+                onClick={() => copy(`${apiKey ?? ''}`, 'ea')}
+                className="absolute top-2 right-2 fc-btn fc-btn-ghost text-xs px-2 py-1"
+              >
+                {copied === 'ea' ? 'Copied!' : 'Copy key'}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <span className="fc-badge shrink-0 mt-0.5">4</span>
+            <p>
+              Done. Every closed position is sent to your journal within seconds. No manual entry needed.
+            </p>
           </div>
         </div>
-
-        <div className="relative">
-          <pre className="bg-stone rounded-lg p-4 text-xs font-mono overflow-x-auto">{eaCode}</pre>
-          <button
-            onClick={() => copy(eaCode, 'ea')}
-            className="absolute top-2 right-2 fc-btn fc-btn-ghost text-xs px-2 py-1"
-          >
-            {copied === 'ea' ? 'Copied!' : 'Copy'}
-          </button>
-        </div>
-
-        <div className="flex gap-3 text-sm">
-          <span className="fc-badge shrink-0 mt-0.5">4</span>
-          <p>That's it. Every time a position closes, the EA sends it to your journal automatically. Trades appear in your <a href="/trades" className="text-[#ff3e00] hover:underline">Trade Log</a> within seconds.</p>
-        </div>
       </div>
+
+      {/* Troubleshooting */}
+      <details className="text-sm">
+        <summary className="cursor-pointer font-semibold text-brown hover:text-ink transition-colors">
+          Troubleshooting
+        </summary>
+        <div className="mt-3 space-y-2 text-brown">
+          <p><strong className="text-ink">Trades not appearing?</strong> Check the MT5 Experts tab for errors. Most common cause: the server URL is not in the WebRequest whitelist (Step 2).</p>
+          <p><strong className="text-ink">Wrong symbol names?</strong> Make sure you selected the correct broker in the EA inputs — it auto-strips the broker suffix.</p>
+          <p><strong className="text-ink">HTTP 401 errors?</strong> Your API key is wrong or empty. Copy it again from above.</p>
+          <p><strong className="text-ink">Duplicate trades?</strong> The EA deduplicates by ticket number — duplicates are safe and ignored by the server.</p>
+        </div>
+      </details>
     </div>
   )
 }
