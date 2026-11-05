@@ -28,15 +28,15 @@ export default async function Dashboard() {
         <TargetsWidget />
 
         <section className="w-full grid grid-cols-1 md:grid-cols-3 gap-3 mb-16">
-          <Link href="/trades/new" className="fc-card fc-card-hover p-8 flex flex-col">
+          <Link href="/settings" className="fc-card fc-card-hover p-8 flex flex-col">
             <div className="mb-6 w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ background: '#64c6ff' }}>
               <svg className="w-6 h-6 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h3 className="fc-heading text-xl mb-2">New Trade Entry</h3>
+            <h3 className="fc-heading text-xl mb-2">MT5 Auto-Import</h3>
             <p className="text-[15px] text-brown leading-relaxed flex-grow">
-              Log a new trade with all the essential details including entry, exit, P&amp;L, and outcome.
+              Connect your MT5 terminal to automatically log every closed trade to your journal.
             </p>
           </Link>
 
@@ -67,12 +67,12 @@ export default async function Dashboard() {
 
         <section className="w-full flex justify-center pb-8">
           <Link
-            href="/trades/new"
+            href="/trades"
             className="fc-btn fc-btn-primary w-full max-w-2xl py-6 text-xl gap-4"
           >
-            Log new trade
+            View trade log
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </Link>
         </section>

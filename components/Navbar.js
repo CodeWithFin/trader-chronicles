@@ -56,15 +56,6 @@ const NAV_LINKS = [
     ),
   },
   {
-    href: '/signals',
-    label: 'Signals',
-    icon: (
-      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3l1.664 9.136M3 3h2m-2 0L5 3m14.336 9.136L21 3m0 0h-2m2 0l-2 0M9 17h6m-3-3v3m-7 4h14a1 1 0 001-1v-1a4 4 0 00-4-4H8a4 4 0 00-4 4v1a1 1 0 001 1z" />
-      </svg>
-    ),
-  },
-  {
     href: '/settings',
     label: 'Settings',
     icon: (
@@ -142,12 +133,6 @@ export default function Navbar({ initialSession = null }) {
                   {link.label}
                 </Link>
               ))}
-              <Link href="/trades/new" className="fc-btn fc-btn-primary fc-btn-sm ml-2">
-                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                New Trade
-              </Link>
               <button onClick={handleLogout} className="fc-btn fc-btn-ghost fc-btn-sm">
                 Logout
               </button>
@@ -211,13 +196,6 @@ export default function Navbar({ initialSession = null }) {
 
             {session ? (
               <div className="flex flex-col gap-2">
-                <Link
-                  href="/trades/new"
-                  onClick={closeMobileMenu}
-                  className="w-full px-4 py-3 rounded-[10px] bg-ink text-canvas text-sm font-semibold text-center"
-                >
-                  New Trade
-                </Link>
                 {NAV_LINKS.map((link) => (
                   <Link
                     key={link.href}
