@@ -2,8 +2,6 @@ import { cookies } from 'next/headers'
 import TraderProfileClient from '@/components/TraderProfileClient'
 import { getSessionUser } from '@/lib/auth'
 import { fetchPublicTraderStats, fetchPublicTraderTrades } from '@/lib/public-traders'
-import { fetchSignalsByUser } from '@/lib/signals'
-
 export const dynamic = 'force-dynamic'
 
 function serializeTrade(row) {
@@ -29,7 +27,6 @@ export default async function LeaderboardProfilePage({ params }) {
 
   let profile = null
   let trades = []
-  let signals = []
   try {
     const rawProfile = await fetchPublicTraderStats()
     const row = (rawProfile || []).find((t) => t.id === id)
@@ -43,26 +40,11 @@ export default async function LeaderboardProfilePage({ params }) {
         bestAssetPair: row.best_asset_pair,
         joinedAt: row.joined_at,
       }
-      const [rawTrades, rawSignals] = await Promise.all([
-        fetchPublicTraderTrades(id),
-        fetchSignalsByUser(id),
-      ])
-      trades = (rawTrades || []).map(serializeTrade)
-      signals = (rawSignals || []).map((s) => ({
-        id: s.id,
-        asset_pair: s.asset_pair,
-        direction: s.direction,
-        entry_price: s.entry_price != null ? Number(s.entry_price) : null,
-        stop_loss: s.stop_loss != null ? Number(s.stop_loss) : null,
-        take_profit: s.take_profit != null ? Number(s.take_profit) : null,
-        status: s.status,
-        notes: s.notes || '',
-        created_at: s.created_at,
-      }))
+      trades = (await fetchPublicTraderTrades(id) || []).map(serializeTrade)
     }
   } catch (e) {
     console.error('Error fetching profile:', e)
   }
 
-  return <TraderProfileClient profile={profile} trades={trades} signals={signals} session={session} />
+  return <TraderProfileClient profile={profile} trades={trades} session={session} />
 }

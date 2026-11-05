@@ -4,13 +4,6 @@ import { format, formatDistanceToNow } from 'date-fns';
 import Navbar from '@/components/Navbar';
 import { formatPnlCurrency, roundPnl } from '@/lib/pnl-money';
 
-const STATUS_LABELS = {
-  active: { label: 'Active', cls: 'fc-badge-neutral' },
-  closed: { label: 'TP Hit', cls: 'fc-badge-win' },
-  stopped: { label: 'SL Hit', cls: 'fc-badge-loss' },
-  cancelled: { label: 'Cancelled', cls: 'fc-badge-tag' },
-};
-
 function getCorrectedPnl(trade) {
   const base = roundPnl(trade.pnl_absolute ?? 0);
   if (!Number.isFinite(base)) return 0;
@@ -32,7 +25,7 @@ function getResultBadgeClass(result) {
   }
 }
 
-export default function TraderProfileClient({ profile, trades = [], signals = [], session = null }) {
+export default function TraderProfileClient({ profile, trades = [], session = null }) {
   if (!profile) {
     return (
       <div className="min-h-screen bg-canvas">
@@ -81,37 +74,6 @@ export default function TraderProfileClient({ profile, trades = [], signals = []
             </div>
           </div>
         </div>
-
-        {signals.length > 0 && (
-          <div className="mb-8">
-            <p className="text-muted font-semibold uppercase text-xs mb-4">Signals</p>
-            <div className="space-y-3">
-              {signals.map((s) => {
-                const meta = STATUS_LABELS[s.status] || STATUS_LABELS.active;
-                return (
-                  <div key={s.id} className="fc-card p-4">
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <span className={`font-semibold ${s.direction === 'Long' ? 'fc-text-pos' : 'fc-text-neg'}`}>
-                        {s.direction === 'Long' ? '▲' : '▼'} {s.asset_pair}
-                      </span>
-                      <span className={`fc-badge ${meta.cls}`}>{meta.label}</span>
-                      <span className={`fc-badge ${s.direction === 'Long' ? 'fc-badge-win' : 'fc-badge-loss'}`}>{s.direction}</span>
-                      <span className="text-xs text-muted ml-auto">
-                        {formatDistanceToNow(new Date(s.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      {s.entry_price != null && <div><span className="text-muted text-xs uppercase mr-1">Entry</span><span className="font-semibold text-ink">{s.entry_price}</span></div>}
-                      {s.stop_loss != null && <div><span className="text-muted text-xs uppercase mr-1">SL</span><span className="font-semibold text-[var(--alert)]">{s.stop_loss}</span></div>}
-                      {s.take_profit != null && <div><span className="text-muted text-xs uppercase mr-1">TP</span><span className="font-semibold text-[var(--mint)]">{s.take_profit}</span></div>}
-                    </div>
-                    {s.notes && <p className="text-sm text-brown mt-2">{s.notes}</p>}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         <div className="mb-4">
           <p className="text-muted font-semibold uppercase text-xs">Trade History</p>
