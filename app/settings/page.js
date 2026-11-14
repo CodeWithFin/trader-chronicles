@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getSessionUser } from '@/lib/auth'
 import { getSql } from '@/lib/db'
 import MT5SetupClient from '@/components/MT5SetupClient'
+import Navbar from '@/components/Navbar'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,13 +19,16 @@ export default async function SettingsPage() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
-      <div>
-        <h1 className="fc-heading-lg text-3xl mb-1">Settings</h1>
-        <p className="text-brown text-sm">Configure your MT5 auto-import and account preferences.</p>
-      </div>
+    <>
+      <Navbar initialSession={user} />
+      <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
+        <div>
+          <h1 className="fc-heading-lg text-3xl mb-1">Settings</h1>
+          <p className="text-brown text-sm">Configure your MT5 auto-import and account preferences.</p>
+        </div>
 
-      <MT5SetupClient initialKey={apiKey} serverUrl={appUrl} />
-    </div>
+        <MT5SetupClient initialKey={apiKey} serverUrl={appUrl} />
+      </div>
+    </>
   )
 }
