@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function Signup() {
@@ -15,7 +14,6 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -40,17 +38,16 @@ export default function Signup() {
         credentials: 'include',
         body: JSON.stringify({ username, email, password }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Failed to create account')
 
       if (data.token) {
         const maxAge = 60 * 60 * 24 * 7
-        document.cookie = `tc_session=${data.token}; path=/; max-age=${maxAge}; samesite=lax`
+        document.cookie = `tc_session=${encodeURIComponent(data.token)}; path=/; max-age=${maxAge}; samesite=lax`
       }
-      window.location.href = '/dashboard'
+      window.location.assign('/dashboard')
     } catch (err) {
       setError(err.message || 'Failed to create account')
-    } finally {
       setLoading(false)
     }
   }
