@@ -3,7 +3,6 @@
 export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function Login() {
@@ -12,7 +11,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -26,17 +24,19 @@ export default function Login() {
         credentials: 'include',
         body: JSON.stringify({ email, password }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Login failed')
 
+      // Always set a non-Secure cookie from JS as a fallback for HTTP deploys.
+      // HttpOnly server cookies marked Secure are dropped by browsers on http://.
       if (data.token) {
         const maxAge = 60 * 60 * 24 * 7
-        document.cookie = `tc_session=${data.token}; path=/; max-age=${maxAge}; samesite=lax`
+        document.cookie = `tc_session=${encodeURIComponent(data.token)}; path=/; max-age=${maxAge}; samesite=lax`
       }
-      window.location.href = '/dashboard'
+      // Full navigation so middleware sees the new cookie (avoids App Router cache loops).
+      window.location.assign('/dashboard')
     } catch (err) {
       setError(err.message || 'Failed to login')
-    } finally {
       setLoading(false)
     }
   }

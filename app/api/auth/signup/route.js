@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { getSql } from '@/lib/db'
-import { SESSION_COOKIE, buildSetCookieHeader, signSessionToken } from '@/lib/auth'
+import {
+  SESSION_COOKIE,
+  buildSetCookieHeader,
+  shouldUseSecureCookie,
+  signSessionToken,
+} from '@/lib/auth'
 import { responseFromPgError } from '@/lib/pg-errors'
 import { isTradingAccountsSchemaMissingError } from '@/lib/trades-schema-fallback'
 
@@ -49,7 +54,10 @@ export async function POST(request) {
       username: created.username,
     })
 
-    const cookieHeader = buildSetCookieHeader(SESSION_COOKIE, token, { maxAge: 60 * 60 * 24 * 7 })
+    const cookieHeader = buildSetCookieHeader(SESSION_COOKIE, token, {
+      maxAge: 60 * 60 * 24 * 7,
+      secure: shouldUseSecureCookie(request),
+    })
     return new Response(
       JSON.stringify({ ok: true, token, user: { id: created.id, email: created.email, username: created.username } }),
       { status: 200, headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookieHeader } }
