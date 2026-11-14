@@ -105,7 +105,13 @@ export default function TradingAccountsClient({ session = null }) {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this trading account?')) return
+    if (
+      !confirm(
+        'Delete this trading account? All trades linked to it will be permanently deleted.'
+      )
+    ) {
+      return
+    }
     try {
       const res  = await fetch(`/api/trading-accounts/${id}`, { method: 'DELETE', credentials: 'include' })
       const data = await res.json()

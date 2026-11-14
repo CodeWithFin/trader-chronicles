@@ -153,22 +153,18 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Trading account not found' }, { status: 404 })
     }
 
-    // Check if account has trades
-    const tradeCount = await sql.query(
-      `SELECT COUNT(*)::int AS c FROM backtest_entries WHERE account_id = $1`,
-      [id]
+    // Remove trades tied to this account first (FK is RESTRICT on older DBs).
+    const deletedTrades = await sql.query(
+      `DELETE FROM backtest_entries WHERE account_id = $1 AND user_id = $2 RETURNING id`,
+      [id, user.id]
     )
-
-    if (tradeCount[0]?.c > 0) {
-      return NextResponse.json(
-        { error: 'Cannot delete account with existing trades. Delete or reassign trades first.' },
-        { status: 400 }
-      )
-    }
 
     await sql.query(`DELETE FROM trading_accounts WHERE id = $1 AND user_id = $2`, [id, user.id])
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      success: true,
+      deletedTrades: Array.isArray(deletedTrades) ? deletedTrades.length : 0,
+    })
   } catch (error) {
     if (isTradingAccountsSchemaMissingError(error)) {
       return NextResponse.json({ error: TRADING_ACCOUNTS_MIGRATION_HELP }, { status: 503 })

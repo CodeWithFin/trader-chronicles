@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_account_targets_account_id ON public.account_targ
 CREATE TABLE IF NOT EXISTS public.backtest_entries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  account_id UUID NOT NULL REFERENCES public.trading_accounts(id) ON DELETE RESTRICT,
+  account_id UUID NOT NULL REFERENCES public.trading_accounts(id) ON DELETE CASCADE,
   date_time TIMESTAMPTZ NOT NULL,
   end_date TIMESTAMPTZ,
   asset_pair TEXT NOT NULL,

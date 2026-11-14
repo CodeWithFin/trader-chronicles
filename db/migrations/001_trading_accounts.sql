@@ -32,7 +32,7 @@ ALTER TABLE public.backtest_entries ALTER COLUMN account_id SET NOT NULL;
 
 ALTER TABLE public.backtest_entries DROP CONSTRAINT IF EXISTS backtest_entries_account_id_fkey;
 ALTER TABLE public.backtest_entries ADD CONSTRAINT backtest_entries_account_id_fkey
-  FOREIGN KEY (account_id) REFERENCES public.trading_accounts(id) ON DELETE RESTRICT;
+  FOREIGN KEY (account_id) REFERENCES public.trading_accounts(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_backtest_entries_account_id ON public.backtest_entries(account_id);
 CREATE INDEX IF NOT EXISTS idx_backtest_entries_user_account ON public.backtest_entries(user_id, account_id);
