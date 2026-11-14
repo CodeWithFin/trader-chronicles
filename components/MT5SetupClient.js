@@ -21,6 +21,12 @@ const BROKERS = [
     suffix: '.v',
     note: 'Symbols end with ".v" (e.g. EURUSD.v) — stripped automatically',
   },
+  {
+    id: 'hfm',
+    label: 'HFM',
+    suffix: '',
+    note: 'Standard symbol names (e.g. EURUSD) — no suffix',
+  },
 ]
 
 export default function MT5SetupClient({ initialKey, serverUrl }) {

@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //| TraderChronicles_Brokers.mq5 — Auto trade logger                 |
-//| Supported brokers: Equity Edge · Just Markets · Valetax          |
+//| Supported: Equity Edge · Just Markets · Valetax · HFM            |
 //+------------------------------------------------------------------+
 #property copyright "Trader Chronicles"
 #property version   "1.1"
@@ -12,6 +12,7 @@ enum BROKER_TYPE
    BROKER_EQUITY_EDGE  = 0,  // Equity Edge
    BROKER_JUST_MARKETS = 1,  // Just Markets
    BROKER_VALETAX      = 2,  // Valetax
+   BROKER_HFM          = 3,  // HFM
   };
 
 input BROKER_TYPE Broker    = BROKER_EQUITY_EDGE;             // Select your broker
@@ -22,8 +23,9 @@ input string      ServerUrl = "http://102.207.151.58:3050";   // Server URL (do 
 // Equity Edge  : no suffix (standard symbols e.g. EURUSD)
 // Just Markets : "+" suffix  e.g. EURUSD+
 // Valetax      : ".v" suffix e.g. EURUSD.v
+// HFM          : no suffix (standard symbols e.g. EURUSD)
 // If your broker uses a different suffix, adjust BROKER_SUFFIX below.
-string BROKER_SUFFIX[3] = { "", "+", ".v" };
+string BROKER_SUFFIX[4] = { "", "+", ".v", "" };
 
 //--- track which tickets we already sent
 ulong g_sent[];
