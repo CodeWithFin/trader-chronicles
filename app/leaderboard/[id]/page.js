@@ -2,7 +2,6 @@ import { cookies } from 'next/headers'
 import TraderProfileClient from '@/components/TraderProfileClient'
 import { getSessionUser } from '@/lib/auth'
 import { fetchPublicTraderStats, fetchPublicTraderTrades } from '@/lib/public-traders'
-
 export const dynamic = 'force-dynamic'
 
 function serializeTrade(row) {
@@ -41,8 +40,7 @@ export default async function LeaderboardProfilePage({ params }) {
         bestAssetPair: row.best_asset_pair,
         joinedAt: row.joined_at,
       }
-      const rawTrades = await fetchPublicTraderTrades(id)
-      trades = (rawTrades || []).map(serializeTrade)
+      trades = (await fetchPublicTraderTrades(id) || []).map(serializeTrade)
     }
   } catch (e) {
     console.error('Error fetching profile:', e)

@@ -1,7 +1,7 @@
 -- Backtesting module: a fully separate record set from live/normal trades.
 -- Normal trades live in public.backtest_entries (legacy name). This table is
 -- ONLY for strategy backtesting and is never combined with normal trades.
--- Run once in the Neon SQL Editor on existing projects.
+-- Run once in the your PostgreSQL database on existing projects.
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

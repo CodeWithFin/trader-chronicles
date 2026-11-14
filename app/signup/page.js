@@ -43,6 +43,10 @@ export default function Signup() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create account')
 
+      if (data.token) {
+        const maxAge = 60 * 60 * 24 * 7
+        document.cookie = `tc_session=${data.token}; path=/; max-age=${maxAge}; samesite=lax`
+      }
       window.location.href = '/dashboard'
     } catch (err) {
       setError(err.message || 'Failed to create account')

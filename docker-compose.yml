@@ -10,7 +10,7 @@ services:
       - "${DB_PORT:-5433}:5432"
     volumes:
       - trader_pgdata:/var/lib/postgresql/data
-      - ./neon/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-trader} -d ${DB_NAME:-trader_chronicles}"]
       interval: 5s

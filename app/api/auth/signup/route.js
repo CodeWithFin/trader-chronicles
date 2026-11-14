@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { getSql } from '@/lib/db'
-import { SESSION_COOKIE, sessionCookieOptions, signSessionToken } from '@/lib/auth'
+import { SESSION_COOKIE, buildSetCookieHeader, signSessionToken } from '@/lib/auth'
 import { responseFromPgError } from '@/lib/pg-errors'
 import { isTradingAccountsSchemaMissingError } from '@/lib/trades-schema-fallback'
 
@@ -39,7 +39,7 @@ export async function POST(request) {
     } catch (e) {
       if (!isTradingAccountsSchemaMissingError(e)) throw e
       console.warn(
-        'signup: trading_accounts not migrated; user created without default trading account. Run neon/migrations/001_trading_accounts.sql'
+        'signup: trading_accounts not migrated; user created without default trading account. Run db/migrations/001_trading_accounts.sql'
       )
     }
 
@@ -49,12 +49,11 @@ export async function POST(request) {
       username: created.username,
     })
 
-    const res = NextResponse.json({
-      ok: true,
-      user: { id: created.id, email: created.email, username: created.username },
-    })
-    res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions())
-    return res
+    const cookieHeader = buildSetCookieHeader(SESSION_COOKIE, token, { maxAge: 60 * 60 * 24 * 7 })
+    return new Response(
+      JSON.stringify({ ok: true, token, user: { id: created.id, email: created.email, username: created.username } }),
+      { status: 200, headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookieHeader } }
+    )
   } catch (e) {
     const msg = e.message || ''
     if (msg.includes('unique') || msg.includes('duplicate') || e?.code === '23505') {

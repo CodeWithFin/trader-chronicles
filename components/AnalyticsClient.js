@@ -117,6 +117,8 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
     winRateByTag,
     dailyContribution = [],
     financialPerformance = { startingBalance: 10000, points: [] },
+    sessionAnalysis = [],
+    directionAnalysis = [],
   } = displayAnalytics
 
   const tagData = Object.entries(winRateByTag).map(([tag, rate]) => ({
@@ -332,6 +334,95 @@ export default function AnalyticsClient({ initialData = null, session = null }) 
                   <Bar dataKey="winRate" fill={palette.accent} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Trading Sessions */}
+          {sessionAnalysis.length > 0 && (
+            <div className="fc-card p-6 md:p-12">
+              <h2 className="fc-heading text-2xl mb-2">Trading Sessions</h2>
+              <p className="text-sm text-brown mb-6">Trades and win rate by market session (UTC)</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--stone)]">
+                      <th className="text-left pb-3 text-xs font-semibold uppercase text-muted pr-8">Session</th>
+                      <th className="text-right pb-3 text-xs font-semibold uppercase text-muted pr-8">Trades</th>
+                      <th className="text-right pb-3 text-xs font-semibold uppercase text-muted pr-8">Wins</th>
+                      <th className="text-right pb-3 text-xs font-semibold uppercase text-muted pr-8">Win Rate</th>
+                      <th className="text-right pb-3 text-xs font-semibold uppercase text-muted">Net P&amp;L</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sessionAnalysis.map((s) => (
+                      <tr key={s.session} className="border-b border-[var(--stone)] last:border-0">
+                        <td className="py-3 font-semibold text-ink pr-8">{s.session}</td>
+                        <td className="py-3 text-right text-charcoal pr-8">{s.total}</td>
+                        <td className="py-3 text-right text-charcoal pr-8">{s.wins}</td>
+                        <td className="py-3 text-right pr-8">
+                          <span className={s.winRate >= 50 ? 'fc-text-pos font-semibold' : 'fc-text-neg font-semibold'}>
+                            {s.winRate}%
+                          </span>
+                          <div className="mt-1 h-1.5 rounded-full bg-[var(--stone)] w-24 ml-auto">
+                            <div
+                              className={`h-1.5 rounded-full ${s.winRate >= 50 ? 'bg-[var(--mint)]' : 'bg-[var(--alert)]'}`}
+                              style={{ width: `${Math.min(s.winRate, 100)}%` }}
+                            />
+                          </div>
+                        </td>
+                        <td className={`py-3 text-right font-semibold ${s.pnl >= 0 ? 'fc-text-pos' : 'fc-text-neg'}`}>
+                          {s.pnl >= 0 ? '+' : ''}${s.pnl.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Buy vs Sell */}
+          {directionAnalysis.length > 0 && (
+            <div className="fc-card p-6 md:p-12">
+              <h2 className="fc-heading text-2xl mb-2">Buys vs Sells</h2>
+              <p className="text-sm text-brown mb-6">Win rate and P&amp;L broken down by trade direction</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {directionAnalysis.map((d) => (
+                  <div key={d.direction} className="fc-surface rounded-xl p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className={`text-lg font-semibold ${d.direction === 'Long' ? 'fc-text-pos' : 'fc-text-neg'}`}>
+                        {d.direction === 'Long' ? '▲' : '▼'} {d.direction === 'Long' ? 'Long (Buy)' : 'Short (Sell)'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-xs uppercase font-semibold text-muted mb-1">Trades</p>
+                        <p className="text-2xl font-semibold text-ink">{d.total}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase font-semibold text-muted mb-1">Win Rate</p>
+                        <p className={`text-2xl font-semibold ${d.winRate >= 50 ? 'fc-text-pos' : 'fc-text-neg'}`}>{d.winRate}%</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase font-semibold text-muted mb-1">Wins</p>
+                        <p className="text-xl font-semibold text-ink">{d.wins}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase font-semibold text-muted mb-1">Net P&amp;L</p>
+                        <p className={`text-xl font-semibold ${d.pnl >= 0 ? 'fc-text-pos' : 'fc-text-neg'}`}>
+                          {d.pnl >= 0 ? '+' : ''}${d.pnl.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 h-2 rounded-full bg-[var(--stone)]">
+                      <div
+                        className={`h-2 rounded-full ${d.winRate >= 50 ? 'bg-[var(--mint)]' : 'bg-[var(--alert)]'}`}
+                        style={{ width: `${Math.min(d.winRate, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

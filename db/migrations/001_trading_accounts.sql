@@ -1,5 +1,5 @@
--- Run once on existing Neon DBs that already have users/backtest_entries.
--- New projects should use neon/schema.sql only.
+-- Run once on existing PostgreSQL databases that already have users/backtest_entries.
+-- New projects should use db/schema.sql only.
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

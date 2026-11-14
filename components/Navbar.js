@@ -7,19 +7,6 @@ import Image from 'next/image'
 
 const NAV_LINKS = [
   {
-    href: '/trades',
-    label: 'Trade Log',
-    icon: (
-      <svg className="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden>
-        <path d="M0 0h48v48H0z" fill="none" />
-        <g fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="4">
-          <path d="M13 10h28v34H13z" />
-          <path strokeLinecap="round" d="M35 10V4H8a1 1 0 0 0-1 1v33h6m8-16h12m-12 8h12" />
-        </g>
-      </svg>
-    ),
-  },
-  {
     href: '/analytics',
     label: 'Analytics',
     icon: (
@@ -52,6 +39,16 @@ const NAV_LINKS = [
           <path d="M35.646 17.047c-.182-2.557-2.136-4.51-4.694-4.693C28.397 12.17 24.632 12 19.5 12c-5.133 0-8.897.171-11.452.354c-2.558.182-4.512 2.136-4.694 4.694C3.17 19.602 3 23.367 3 28.5s.171 8.897.354 11.453c.182 2.557 2.136 4.51 4.694 4.693c2.555.183 6.32.354 11.452.354c5.133 0 8.897-.171 11.452-.354c2.558-.182 4.512-2.136 4.694-4.694c.183-2.555.354-6.32.354-11.452c0-5.133-.171-8.897-.354-11.453" />
           <path d="M24.026 30.727a7 7 0 1 0-8.066-.01c-2.496.933-4.485 2.709-5.5 4.92c-.646 1.405.16 3.087 1.704 3.18l.044.003a150 150 0 0 0 7.77.18c3.309 0 5.874-.081 7.77-.18l.045-.003c1.543-.093 2.35-1.775 1.704-3.18c-1.012-2.203-2.989-3.974-5.471-4.91" />
         </g>
+      </svg>
+    ),
+  },
+  {
+    href: '/settings',
+    label: 'Settings',
+    icon: (
+      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
   },
@@ -123,12 +120,6 @@ export default function Navbar({ initialSession = null }) {
                   {link.label}
                 </Link>
               ))}
-              <Link href="/trades/new" className="fc-btn fc-btn-primary fc-btn-sm ml-2">
-                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                New Trade
-              </Link>
               <button onClick={handleLogout} className="fc-btn fc-btn-ghost fc-btn-sm">
                 Logout
               </button>
@@ -192,13 +183,6 @@ export default function Navbar({ initialSession = null }) {
 
             {session ? (
               <div className="flex flex-col gap-2">
-                <Link
-                  href="/trades/new"
-                  onClick={closeMobileMenu}
-                  className="w-full px-4 py-3 rounded-[10px] bg-ink text-canvas text-sm font-semibold text-center"
-                >
-                  New Trade
-                </Link>
                 {NAV_LINKS.map((link) => (
                   <Link
                     key={link.href}

@@ -85,7 +85,7 @@ export async function GET(request) {
         return NextResponse.json(
           {
             error:
-              'Account filters need the trading_accounts migration. In Neon SQL Editor, run neon/migrations/001_trading_accounts.sql from this repo.',
+              'Account filters need the trading_accounts migration. Run db/migrations/001_trading_accounts.sql against PostgreSQL.',
           },
           { status: 503 }
         )
