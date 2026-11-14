@@ -1,5 +1,5 @@
--- Trader Chronicles schema for Neon (standalone PostgreSQL)
--- Run this in the Neon SQL Editor after creating a project.
+-- Trader Chronicles schema for PostgreSQL
+-- Apply this to your PostgreSQL database (e.g. via psql or docker init).
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

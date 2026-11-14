@@ -1,32 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import dns from 'dns'
-import net from 'net'
-import { neon } from '@neondatabase/serverless'
-
-function preferIpv4ForNeonFetch() {
-  try {
-    dns.setDefaultResultOrder('ipv4first')
-  } catch {
-    /* older Node */
-  }
-  if (typeof net.setDefaultAutoSelectFamily === 'function') {
-    net.setDefaultAutoSelectFamily(false)
-  }
-}
-
-preferIpv4ForNeonFetch()
-
-function normalizeDatabaseUrl(connectionString) {
-  if (!connectionString) return connectionString
-  try {
-    const u = new URL(connectionString.replace(/^postgresql:/i, 'http:'))
-    u.searchParams.delete('channel_binding')
-    return u.toString().replace(/^http:/i, 'postgresql:')
-  } catch {
-    return connectionString.replace(/[&?]channel_binding=[^&]*/g, '').replace(/\?$/, '')
-  }
-}
+import postgres from 'postgres'
 
 const envPath = path.join(process.cwd(), '.env')
 if (fs.existsSync(envPath)) {
@@ -40,17 +14,18 @@ if (fs.existsSync(envPath)) {
   }
 }
 
-const url = normalizeDatabaseUrl(process.env.DATABASE_URL)
+const url = process.env.DATABASE_URL
 if (!url) {
   console.error('DATABASE_URL is missing')
   process.exit(1)
 }
 
-const sql = neon(url)
+const sslMode = url.includes('sslmode=require') || url.includes('ssl=true')
+const sql = postgres(url, sslMode ? { ssl: 'require' } : {})
 
 async function migrate() {
-  console.log('Running migration 004_account_targets.sql with IPv4 fallback...')
-  
+  console.log('Running migration 004_account_targets.sql...')
+
   await sql`
     CREATE TABLE IF NOT EXISTS public.account_targets (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -60,15 +35,21 @@ async function migrate() {
       updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
     );
   `
-  
+
   await sql`
     CREATE INDEX IF NOT EXISTS idx_account_targets_account_id ON public.account_targets(account_id);
   `
-  
-  console.log('SUCCESS: Migration 004_account_targets.sql successfully applied to Neon Database!')
+
+  console.log('SUCCESS: Migration 004_account_targets.sql applied to PostgreSQL.')
+  await sql.end({ timeout: 1 })
 }
 
-migrate().catch((err) => {
+migrate().catch(async (err) => {
   console.error('Migration failed:', err)
+  try {
+    await sql.end({ timeout: 1 })
+  } catch {
+    /* ignore */
+  }
   process.exit(1)
 })

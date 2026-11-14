@@ -23,7 +23,7 @@ export async function GET() {
         error: 'Failed to fetch leaderboard',
         details:
           error.message ||
-          'Run neon/schema.sql in the Neon SQL Editor (including get_public_trader_stats).',
+          'Apply db/schema.sql to PostgreSQL (including get_public_trader_stats).',
       },
       { status: 500 }
     )

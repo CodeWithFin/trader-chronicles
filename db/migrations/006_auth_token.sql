@@ -1,5 +1,5 @@
 -- Add auth_token field for sync agent authentication
--- Run this in the Neon SQL Editor
+-- Run this in the your PostgreSQL database
 
 ALTER TABLE public.trading_accounts
   ADD COLUMN IF NOT EXISTS auth_token TEXT,

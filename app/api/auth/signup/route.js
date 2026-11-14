@@ -39,7 +39,7 @@ export async function POST(request) {
     } catch (e) {
       if (!isTradingAccountsSchemaMissingError(e)) throw e
       console.warn(
-        'signup: trading_accounts not migrated; user created without default trading account. Run neon/migrations/001_trading_accounts.sql'
+        'signup: trading_accounts not migrated; user created without default trading account. Run db/migrations/001_trading_accounts.sql'
       )
     }
 

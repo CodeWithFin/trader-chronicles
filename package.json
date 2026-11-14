@@ -1,7 +1,7 @@
 {
   "name": "trader-chronicles",
   "version": "1.0.0",
-  "description": "Trade Journal Application - Log, track, and analyze your trades with Next.js + Neon",
+  "description": "Trade Journal Application - Log, track, and analyze your trades with Next.js + PostgreSQL",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,7 +13,6 @@
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/space-grotesk": "^5.3.0",
     "@imagekit/nodejs": "^7.5.0",
-    "@neondatabase/serverless": "^1.2.0",
     "axios": "^1.6.2",
     "bcryptjs": "^3.0.3",
     "date-fns": "^3.0.6",

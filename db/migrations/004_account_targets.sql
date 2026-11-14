@@ -1,5 +1,5 @@
 -- Weekly/monthly profit targets per trading account.
--- Run once on existing Neon DBs. New projects should use neon/schema.sql only.
+-- Run once on existing PostgreSQL databases. New projects should use db/schema.sql only.
 
 CREATE TABLE IF NOT EXISTS public.account_targets (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
